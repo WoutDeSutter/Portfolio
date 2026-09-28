@@ -65,6 +65,19 @@
     "notFound": "This project does not exist.",
     "technologies": "Technology",
     "links": "Links",
+    "media": "Media",
+    "year": "Year",
+    "statusLabel": "Status",
+    "previous": "Previous project",
+    "next": "Next project",
+    "pager": "Project navigation",
+    "demo": {
+      "heading": "Interactive demo",
+      "notice": "The demo loads extra content and can be heavy on older devices.",
+      "load": "Load demo",
+      "close": "Close demo",
+      "openExternal": "Open demo in a new tab"
+    },
     "status": {
       "concept": "Concept",
       "in-progress": "In progress",

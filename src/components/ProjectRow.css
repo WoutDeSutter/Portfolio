@@ -57,7 +57,9 @@
   padding: var(--space-8) 0;
 }
 
-@media (min-width: 64rem) {
+/* Side by side only when the column itself is wide enough (not the screen): with the 3D
+   stage the column is narrow, even on a wide screen. `.station` is the container. */
+@container (min-width: 50rem) {
   .project-row--large .project-row__link:has(.project-row__hero) {
     grid-template-columns: 3fr 2fr;
     gap: var(--space-8);

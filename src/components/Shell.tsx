@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { site } from '../content/content';
 import { useSceneSupport } from '../hooks/useSceneSupport';
+import type { CameraHeading } from '../scene/interactive';
 import { useTranslation } from '../i18n/useTranslation';
 import { CvButton } from './CvButton';
 import { FloorPlan } from './FloorPlan';
@@ -19,6 +20,8 @@ export function Shell() {
   const mainRef = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
   const showScene = useSceneSupport();
+  // "Lifted" state: the scene reports where its camera goes, the floor plan shows it.
+  const [cameraHeading, setCameraHeading] = useState<CameraHeading | null>(null);
 
   // After navigating, start at the top and move keyboard/screen-reader focus to the new content.
   useEffect(() => {
@@ -38,7 +41,7 @@ export function Shell() {
 
   return (
     <div className={showScene ? 'shell shell--scene' : 'shell'}>
-      {showScene && <SceneLayer />}
+      {showScene && <SceneLayer onHeadingChange={setCameraHeading} />}
 
       <a className="skip-link" href="#main" onClick={skipToContent}>
         {t('common.skipToContent')}
@@ -60,7 +63,7 @@ export function Shell() {
       </main>
 
       <aside className="shell__plan">
-        <FloorPlan showView={showScene} />
+        <FloorPlan cameraHeading={showScene ? cameraHeading : null} />
       </aside>
     </div>
   );

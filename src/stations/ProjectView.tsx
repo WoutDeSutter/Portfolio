@@ -1,20 +1,28 @@
 import { Link, useParams } from 'react-router';
-import { ProjectMedia } from '../components/ProjectMedia';
-import { StatusTag } from '../components/StatusTag';
-import { TechList } from '../components/TechList';
+import { ProjectDemo } from '../components/ProjectDemo';
+import { ProjectFacts } from '../components/ProjectFacts';
+import { MediaFigure, ProjectGallery } from '../components/ProjectMedia';
+import { ProjectPager } from '../components/ProjectPager';
+import { ProjectSections } from '../components/ProjectSections';
 import { getProject } from '../content/content';
-import { PROJECT_SECTIONS } from '../content/types';
+import { useDocumentDescription } from '../hooks/useDocumentDescription';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useTranslation } from '../i18n/useTranslation';
 import './ProjectView.css';
 
+/**
+ * A project case study. Every part is optional except title and summary,
+ * so small projects stay short and featured ones can grow.
+ */
 export function ProjectView() {
-  const { t, tOptional } = useTranslation();
+  const { t } = useTranslation();
   // useParams reads the `:slug` part of the route /projects/:slug.
   const { slug = '' } = useParams();
   const project = getProject(slug);
   const title = project ? t(`projects.${slug}.title`) : t('project.notFound');
+  const summary = project ? t(`projects.${slug}.summary`) : '';
   useDocumentTitle(title);
+  useDocumentDescription(summary || title);
 
   if (!project) {
     return (
@@ -28,45 +36,33 @@ export function ProjectView() {
   }
 
   const isLab = project.kind === 'lab';
-  const sections = PROJECT_SECTIONS.map((id) => ({
-    id,
-    text: tOptional(`projects.${slug}.sections.${id}`),
-  })).filter((section) => section.text);
+  // The first image or video is the hero; everything else goes into the gallery.
+  const [hero, ...gallery] = project.media.filter((item) => item.type !== 'model');
 
   return (
-    <article className="station project">
+    // `key` resets the page (e.g. an open demo) when moving to another project.
+    <article key={slug} className="station project">
       <Link to={isLab ? '/lab' : '/work'} className="project__back label">
         ← {t(isLab ? 'project.backToLab' : 'project.back')}
       </Link>
 
       <header className="station__header">
-        <div className="project__meta">
-          <StatusTag status={project.status} />
-          {project.year && <span className="label">{project.year}</span>}
-        </div>
         <h1 className="station__title">{title}</h1>
-        <p className="station__intro">{t(`projects.${slug}.summary`)}</p>
+        <p className="station__intro">{summary}</p>
+        <ProjectFacts project={project} />
       </header>
 
-      <ProjectMedia items={project.media} />
+      {hero && <MediaFigure item={hero} eager />}
 
-      {sections.map((section) => (
-        <section key={section.id} className="project__section">
-          <h2 className="label">{t(`project.sections.${section.id}`)}</h2>
-          <p>{section.text}</p>
-        </section>
-      ))}
-
-      {project.technologies.length > 0 && (
-        <section className="project__section">
-          <h2 className="label">{t('project.technologies')}</h2>
-          <TechList ids={project.technologies} />
-        </section>
-      )}
+      <ProjectSections slug={slug} />
+      <ProjectDemo demo={project.demo} title={title} />
+      <ProjectGallery items={gallery} />
 
       {project.links.length > 0 && (
-        <section className="project__section">
-          <h2 className="label">{t('project.links')}</h2>
+        <section className="project__section" aria-labelledby="project-links">
+          <h2 id="project-links" className="label">
+            {t('project.links')}
+          </h2>
           <ul className="project__links" role="list">
             {project.links.map((link) => (
               <li key={link.url}>
@@ -78,6 +74,8 @@ export function ProjectView() {
           </ul>
         </section>
       )}
+
+      <ProjectPager project={project} />
     </article>
   );
 }

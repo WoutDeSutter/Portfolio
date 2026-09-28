@@ -65,6 +65,19 @@
     "notFound": "Dit project bestaat niet.",
     "technologies": "Technologie",
     "links": "Links",
+    "media": "Media",
+    "year": "Jaar",
+    "statusLabel": "Status",
+    "previous": "Vorig project",
+    "next": "Volgend project",
+    "pager": "Projectnavigatie",
+    "demo": {
+      "heading": "Interactieve demo",
+      "notice": "De demo laadt extra inhoud en kan zwaar zijn voor oudere toestellen.",
+      "load": "Demo laden",
+      "close": "Demo sluiten",
+      "openExternal": "Demo openen in een nieuw tabblad"
+    },
     "status": {
       "concept": "Concept",
       "in-progress": "In ontwikkeling",

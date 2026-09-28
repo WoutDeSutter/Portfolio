@@ -24,7 +24,7 @@ import { createContactInstallation } from './installations/contact';
 import { createLabInstallation } from './installations/lab';
 import type { Installation } from './installations/types';
 import { createWorkInstallation } from './installations/work';
-import type { HoverInfo, Interactive } from './interactive';
+import type { CameraHeading, HoverInfo, Interactive } from './interactive';
 import { FRAME_SHIFT, FRAME_SHIFT_MIN_WIDTH, cameraTargets, stationPosition } from './layout';
 import { createFloor } from './objects/floor';
 import { createFollowSpot } from './objects/followSpot';
@@ -34,15 +34,20 @@ import { readSceneColors } from './theme';
 
 export type StageSceneOptions = {
   initialStation: StationId;
+  /** Slug of the project whose page is open when the scene starts. */
+  initialProject?: string;
   reducedMotion: boolean;
   /** Called when the visitor clicks a station mark or a project in the scene. */
   onNavigate: (path: string) => void;
   /** Called when the hovered object changes, to show a label next to the cursor. */
   onHover: (info: HoverInfo | null) => void;
+  /** Called when the camera sets off to a new view, so the floor plan can show it. */
+  onHeadingChange: (heading: CameraHeading) => void;
 };
 
 export type StageScene = {
-  goTo: (id: StationId) => void;
+  /** Travel to a station; with a project slug, focus on that project's object there. */
+  goTo: (id: StationId, projectSlug?: string) => void;
   dispose: () => void;
 };
 
@@ -65,7 +70,7 @@ type StationVisual = {
 };
 
 export function createStageScene(container: HTMLElement, options: StageSceneOptions): StageScene {
-  const { reducedMotion, onNavigate, onHover } = options;
+  const { reducedMotion, onNavigate, onHover, onHeadingChange } = options;
   const colors = readSceneColors();
 
   // Renderer, scene, camera
@@ -128,9 +133,17 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
     contact: createContactInstallation(colors, previz),
   };
   for (const [id, installation] of Object.entries(installations) as [StationId, Installation][]) {
-    installation.group.position.copy(stationPosition(findStation(id)));
+    const origin = stationPosition(findStation(id));
+    installation.group.position.copy(origin);
     scene.add(installation.group);
-    interactives.push(...installation.interactives);
+    for (const item of installation.interactives) {
+      // Focus views are defined relative to the installation; convert them to world space.
+      const focus = item.focus && {
+        position: item.focus.position.clone().add(origin),
+        lookAt: item.focus.lookAt.clone().add(origin),
+      };
+      interactives.push({ ...item, focus });
+    }
   }
 
   const followSpot = createFollowSpot(colors);
@@ -139,6 +152,8 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
   // Camera state: `cameraBase` and `lookTarget` are animated; parallax is added on top.
   let currentStation = options.initialStation;
   let hovered: Interactive | null = null;
+  /** The project object whose page is open; it stays highlighted. */
+  let selected: Interactive | null = null;
   const activated = new Set<StationId>();
   const cameraBase = new Vector3();
   const lookTarget = new Vector3();
@@ -153,14 +168,34 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
     installations[id]?.activate?.();
   }
 
-  function goTo(id: StationId) {
+  function refreshHighlight(item: Interactive | null) {
+    item?.setHighlighted?.(item === hovered || item === selected);
+  }
+
+  /**
+   * Move to a station — or, with a project slug, to that project's object at the station,
+   * which then stays highlighted. `instant` skips the camera travel.
+   */
+  function travelTo(id: StationId, projectSlug: string | undefined, instant: boolean) {
     currentStation = id;
     activate(id);
-    const target = cameraTargets(id);
+
+    const previous = selected;
+    selected = interactives.find((item) => item.slug !== undefined && item.slug === projectSlug) ?? null;
+    refreshHighlight(previous);
+    refreshHighlight(selected);
+
+    const station = cameraTargets(id);
+    const focus = selected?.focus;
+    const target = focus ? { ...station, camera: focus.position, lookAt: focus.lookAt } : station;
+    onHeadingChange({
+      camera: { x: target.camera.x, z: target.camera.z },
+      lookAt: { x: target.lookAt.x, z: target.lookAt.z },
+    });
 
     gsapContext.add(() => {
       gsap.killTweensOf([cameraBase, lookTarget, followSpot.position]);
-      if (reducedMotion) {
+      if (instant) {
         cameraBase.copy(target.camera);
         lookTarget.copy(target.lookAt);
         followSpot.position.copy(target.station);
@@ -173,12 +208,10 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
     });
   }
 
-  // Start at the initial station without travelling.
-  const initial = cameraTargets(currentStation);
-  cameraBase.copy(initial.camera);
-  lookTarget.copy(initial.lookAt);
-  followSpot.position.copy(initial.station);
-  activate(currentStation);
+  const goTo = (id: StationId, projectSlug?: string) => travelTo(id, projectSlug, reducedMotion);
+
+  // Start at the initial view without travelling.
+  travelTo(options.initialStation, options.initialProject, true);
 
   // Mark and path highlighting eases towards these values every frame.
   function targetOpacity(id: StationId): number {
@@ -252,14 +285,16 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
     return null;
   }
 
-  /** The current station's own mark is not a link. */
-  const isActionable = (item: Interactive | null) => item !== null && item.stationId !== currentStation;
+  /** Where you already are is not a link: the current station's mark and the open project. */
+  const isActionable = (item: Interactive | null) =>
+    item !== null && item.stationId !== currentStation && item !== selected;
 
   function setHovered(next: Interactive | null) {
     if (next === hovered) return;
-    hovered?.setHighlighted?.(false);
+    const previous = hovered;
     hovered = next;
-    hovered?.setHighlighted?.(true);
+    refreshHighlight(previous);
+    refreshHighlight(hovered);
     canvas.style.cursor = hovered ? 'pointer' : '';
   }
 

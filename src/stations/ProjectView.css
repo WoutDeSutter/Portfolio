@@ -1,6 +1,9 @@
+.project {
+  gap: var(--space-8);
+}
+
 .project__back {
-  display: inline-block;
-  margin-bottom: var(--space-8);
+  justify-self: start;
   text-decoration: none;
 }
 
@@ -8,16 +11,11 @@
   color: var(--color-text);
 }
 
-.project__meta {
-  display: flex;
-  gap: var(--space-4);
-}
-
 .project__section {
   display: grid;
   gap: var(--space-3);
   max-width: var(--reading-max);
-  padding: var(--space-8) 0;
+  padding-top: var(--space-8);
   border-top: var(--border);
 }
 
@@ -27,15 +25,33 @@
   gap: var(--space-4);
 }
 
-.project__links a {
+.project__links a,
+.project-demo__link {
   text-decoration-color: var(--color-accent);
   text-underline-offset: 0.25em;
 }
 
+/* Facts */
+
+.project-facts {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: var(--border);
+}
+
+.project-facts__row {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  align-items: baseline;
+}
+
+/* Media */
+
 .project-media {
   display: grid;
   gap: var(--space-4);
-  margin-bottom: var(--space-8);
 }
 
 .project-media__item {
@@ -46,5 +62,53 @@
 .project-media__item img,
 .project-media__item video {
   width: 100%;
+  height: auto;
   background: var(--color-surface);
+}
+
+/* Demo */
+
+.project-demo__notice {
+  color: var(--color-text-muted);
+}
+
+.project-demo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.project-demo__frame {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border: var(--border);
+  background: var(--color-surface);
+}
+
+/* Previous / next */
+
+.project-pager {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  max-width: var(--reading-max);
+  padding-top: var(--space-8);
+  border-top: var(--border);
+}
+
+.project-pager__link {
+  display: grid;
+  gap: var(--space-1);
+  text-decoration: none;
+}
+
+.project-pager__link:hover .label,
+.project-pager__link:focus-visible .label {
+  color: var(--color-accent);
+}
+
+.project-pager__link--next {
+  justify-items: end;
+  text-align: right;
 }

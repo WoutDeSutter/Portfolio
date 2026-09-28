@@ -10,7 +10,8 @@ export type CameraView = {
 };
 
 /**
- * Camera view per station, shared by the 3D scene and the floor plan's view indicator.
+ * Camera view per station. The scene reports the view it travels to (including focus views
+ * on project objects) back to React, which is how the floor plan's view cone follows it.
  * Each view keeps its installation in the area right of the text column at 1440×900
  * (checked by projecting the installation's corners). The entry is an overview of all
  * five stations; it looks at the stage from the Work side.
