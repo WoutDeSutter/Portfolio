@@ -137,6 +137,19 @@ GitHub Pages has no server, so the contact form sends messages through [Formspre
 
 Also fill in `contact.email`: when sending fails, the form shows it as a fallback. The form has a hidden `_gotcha` field that Formspree uses to drop spam from bots.
 
+## 8. 3D models (Blender)
+
+The booth (a pop-up container), stage, FOH tent and entrance come from `blender/festival.blend`. Each model is a collection with that name (`booth`, `stage`, `foh`, `entrance`); all four sit at the origin, so hide the ones you are not working on (eye icon in the Outliner).
+
+1. Open `blender/festival.blend` and edit a model. Keep its front facing **−Y** (Blender's front view, numpad 1, looks at it) and keep the sizes roughly the same: signs, click areas and the camera are placed in code and expect the model where it is now.
+2. Don't model the text on signs; the site draws it (in the right language) on top of the black sign frames.
+3. Export: open `blender/export_models.py` in the **Scripting** workspace and press **Run Script**. It writes `public/models/<collection>.glb`.
+4. Check the result with `npm run dev`.
+
+Tips: keep it low-poly (the whole terrain is currently around 700 kB), reuse the existing materials (`wood`, `metal`, `fabric`, `accent`, `bulb`, …), and remember that light-emitting materials (`bulb`, `lens`, `screen`) glow at night.
+
+Don't run `build_festival.py` again once you have edited the `.blend`: it rebuilds the models from code and overwrites your changes.
+
 ## Check your changes
 
 ```bash

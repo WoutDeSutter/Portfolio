@@ -25,6 +25,7 @@ import {
   createStage,
   type PlaceObject,
 } from './greybox';
+import { loadModels, type ModelName, type Models } from './models';
 import { BASE_FOV, CameraRig, type View } from './rig';
 import { readWorldColors } from './theme';
 
@@ -123,6 +124,21 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     }
   }
 
+  // Blender models replace the greybox blocks once they have loaded (a failed model keeps its blocks).
+  const MODEL_FOR: Record<Place['kind'], ModelName> = { booth: 'booth', stage: 'stage', foh: 'foh', entrance: 'entrance' };
+  function applyModels(models: Models) {
+    for (const place of PLACES) {
+      const model = models[MODEL_FOR[place.kind]];
+      const object = objects.get(place.id)!;
+      if (!model) continue;
+      object.group.remove(object.visual);
+      disposeTree(object.visual);
+      // Booths share one model: clones share its geometry and materials.
+      object.visual = model.clone();
+      object.group.add(object.visual);
+    }
+  }
+
   // Red stage light from the truss
   const stage = findPlace('about');
   for (const x of [-5, 5]) {
@@ -154,7 +170,8 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     const object = objects.get(id)!;
     const target = object.focus.clone().applyAxisAngle(new Vector3(0, 1, 0), place.facing);
     target.add(new Vector3(place.x, 0, place.z));
-    const phi = place.kind === 'foh' ? 1.05 : place.kind === 'stage' ? 1.3 : 1.25;
+    // FOH: low, behind the engineer and under the tent roof, looking over the desk towards the stage.
+    const phi = place.kind === 'foh' ? 1.32 : place.kind === 'stage' ? 1.3 : 1.25;
     return { target, theta: place.facing, phi, radius: place.viewDistance };
   }
 
@@ -285,9 +302,12 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
   canvas.addEventListener('pointerleave', onPointerLeave);
   canvas.addEventListener('wheel', onWheel, { passive: false });
 
-  // Compile shaders ahead, then start rendering.
-  const ready = renderer
-    .compileAsync(scene, camera)
+  // Load the models, compile shaders ahead, then start rendering.
+  const ready = loadModels()
+    .then((models) => {
+      if (!disposed) applyModels(models);
+    })
+    .then(() => renderer.compileAsync(scene, camera))
     .catch(() => {
       // Compiling ahead is an optimisation; if it fails, the first render compiles instead.
     })
@@ -340,16 +360,21 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('wheel', onWheel);
       for (const object of objects.values()) object.sign?.dispose();
-      scene.traverse((object: Object3D) => {
-        if (!('geometry' in object)) return;
-        const mesh = object as Mesh;
-        mesh.geometry?.dispose();
-        for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) disposeMaterial(material);
-      });
+      disposeTree(scene);
       renderer.dispose();
       canvas.remove();
     },
   };
+}
+
+/** Disposes every geometry, material and texture below `root` (shared ones may be disposed twice; that is harmless). */
+function disposeTree(root: Object3D) {
+  root.traverse((object: Object3D) => {
+    if (!('geometry' in object)) return;
+    const mesh = object as Mesh;
+    mesh.geometry?.dispose();
+    for (const material of Array.isArray(mesh.material) ? mesh.material : [mesh.material]) disposeMaterial(material);
+  });
 }
 
 function disposeMaterial(material: Material | undefined) {
