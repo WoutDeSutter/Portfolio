@@ -50,6 +50,7 @@ MATERIALS = {
     "wood": ((0.23, 0.14, 0.08), 0.85, 0.0, None, 0),
     "container": ((0.07, 0.075, 0.08), 0.55, 0.35, None, 0),
     "steel": ((0.16, 0.165, 0.17), 0.5, 0.8, None, 0),
+    "paper": ((0.55, 0.55, 0.52), 0.9, 0.0, None, 0),
     "wood_dark": ((0.10, 0.065, 0.04), 0.9, 0.0, None, 0),
     "metal": ((0.40, 0.41, 0.43), 0.45, 0.85, None, 0),
     "black": ((0.025, 0.025, 0.028), 0.7, 0.0, None, 0),
@@ -152,6 +153,23 @@ class Part:
         else:
             m = to_blender(m3 @ Matrix.Diagonal(Vector((thickness, direction.length, thickness, 1))))
             self._add(lambda bm: bmesh.ops.create_cube(bm, size=1, matrix=m), material)
+
+    def extruded(self, outline, thickness, x=0, y=0, z=0, material="fabric", rot=(0, 0, 0)):
+        """A flat shape from a 2D outline (x, y pairs, counter-clockwise), `thickness` deep along z."""
+        m = C @ trs((x, y, z), rot)  # the outline is in three.js space, so only convert the result
+
+        def create(bm):
+            front = [bm.verts.new(m @ Vector((px, py, thickness / 2))) for px, py in outline]
+            back = [bm.verts.new(m @ Vector((px, py, -thickness / 2))) for px, py in outline]
+            bm.faces.new(front)
+            bm.faces.new(list(reversed(back)))
+            n = len(outline)
+            for i in range(n):
+                j = (i + 1) % n
+                bm.faces.new((front[i], back[i], back[j], front[j]))
+            return {"verts": front + back}
+
+        self._add(create, material)
 
     def build(self) -> bpy.types.Object:
         mesh = bpy.data.meshes.new(self.name)
@@ -271,11 +289,8 @@ def build_booth():
     shell.build()
 
     bar = Part("booth_bar", col)
-    # Wooden counter and back shelf; an LED strip lights the inside
+    # Wooden counter; an LED strip lights the inside (each booth adds its own interior)
     bar.box(W - 0.2, 0.06, 0.55, 0, 1.0, front - 0.05, "wood", bevel=0.01)
-    bar.box(W - 0.5, 0.05, 0.3, 0, 1.65, back + 0.3, "wood")
-    for x, w, h in ((-1.3, 0.4, 0.3), (-0.8, 0.3, 0.45), (0.9, 0.45, 0.35), (1.35, 0.3, 0.25)):
-        bar.box(w, h, 0.25, x, 1.7, back + 0.3, "wood_dark" if w > 0.35 else "black")
     bar.box(W - 0.6, 0.03, 0.05, 0, top - 0.2, front - 0.35, "bulb")
     bar.build()
 
@@ -317,6 +332,287 @@ def build_booth():
     for x in (-1.2, 1.2):
         sign.box(0.06, 0.6, 0.06, x, top, 0.6, "steel")
     sign.build()
+
+
+
+# --- Booth interiors -------------------------------------------------------------------------
+# Every booth uses the container above plus one of these. The board on the back wall is drawn by
+# the site (menu, tap list, …); the models only contain its frame. Board: centre y 1.85, z -1.06,
+# 3.2 x 1.25 m (Merch: 1.9 m wide, with shirts left and right of it).
+
+BOARD_Y, BOARD_Z = 1.85, -1.06
+
+
+def board_frame(part: Part, width=3.2, height=1.25):
+    part.box(width + 0.12, height + 0.12, 0.03, 0, BOARD_Y, BOARD_Z - 0.03, "black", centered=True)
+
+
+def build_booth_projects():
+    """Food truck: the projects are the menu. Griddle and fryer below the menu board."""
+    part = Part("booth_projects", new_collection("booth_projects"))
+    board_frame(part)
+    # Steel back counter with a griddle and a fryer
+    part.box(3.8, 0.95, 0.55, 0, 0.16, -0.8, "steel", bevel=0.01)
+    part.box(1.4, 0.04, 0.45, -0.9, 1.11, -0.8, "black")
+    part.box(0.7, 0.08, 0.45, 0.9, 1.11, -0.8, "steel", bevel=0.01)
+    for x in (0.72, 1.08):
+        part.box(0.25, 0.02, 0.3, x, 1.19, -0.8, "black")
+    # Sauce bottles, a napkin holder and an order bell on the front counter
+    for x, material in ((-1.5, "accent"), (-1.38, "black"), (-1.26, "accent")):
+        part.cylinder(0.04, 0.2, x, 1.06, 1.1, material, segments=8)
+        part.cylinder(0.012, 0.05, x, 1.26, 1.1, "black", segments=6)
+    part.box(0.16, 0.12, 0.08, -0.95, 1.06, 1.1, "steel")
+    part.box(0.14, 0.1, 0.06, -0.95, 1.06, 1.1, "paper")
+    part.cylinder(0.07, 0.05, -0.55, 1.06, 1.1, "steel", segments=10, radius_top=0.01)
+    # Serving tray for the project item (placed by the site at x 1.15)
+    part.cylinder(0.3, 0.02, 1.15, 1.03, 1.02, "steel", segments=16)
+    part.build()
+
+
+def build_booth_lab():
+    """Drinks stand: experiments are what's on tap. Tap tower on the counter, kegs inside."""
+    part = Part("booth_lab", new_collection("booth_lab"))
+    board_frame(part)
+    # Tap tower: a T of chrome with four taps and handles, over a drip tray
+    part.box(1.1, 0.02, 0.2, 0, 1.06, 1.05, "steel")
+    part.cylinder(0.04, 0.4, 0, 1.06, 1.05, "metal", segments=10)
+    part.cylinder(0.04, 1.0, 0, 1.48, 1.05, "metal", segments=10, rot=(0, 0, math.pi / 2), centered=True)
+    for i, x in enumerate((-0.36, -0.12, 0.12, 0.36)):
+        part.cylinder(0.018, 0.08, x, 1.38, 1.1, "metal", segments=6)
+        part.box(0.035, 0.2, 0.035, x, 1.5, 1.09, "accent" if i % 2 == 0 else "black", bevel=0.005)
+    # Glasses and kegs
+    for x in (-1.3, -1.12):
+        part.cylinder(0.035, 0.12, x, 1.06, 1.1, "paper", segments=8, radius_top=0.042)
+    # Coaster for the lab item (placed by the site at x 1.0)
+    part.cylinder(0.28, 0.02, 1.0, 1.03, 1.02, "wood_dark", segments=16)
+    for x in (-1.2, -0.6, 0.9):
+        part.cylinder(0.2, 0.6, x, 0.16, -0.75, "steel", segments=12)
+        for y in (0.24, 0.66):
+            part.cylinder(0.215, 0.04, x, y, -0.75, "metal", segments=12)
+    part.build()
+
+
+SHIRT = [(-0.28, 0.0), (0.28, 0.0), (0.28, 0.42), (0.42, 0.34), (0.5, 0.48), (0.2, 0.62), (0.08, 0.58),
+         (-0.08, 0.58), (-0.2, 0.62), (-0.5, 0.48), (-0.42, 0.34), (-0.28, 0.42)]
+
+
+def build_booth_merch():
+    """Merch stand: shirts on the back wall around a small board (the CV is the merch)."""
+    part = Part("booth_merch", new_collection("booth_merch"))
+    board_frame(part, width=1.9)
+    shirt = [(px * 0.8, py * 0.8) for px, py in SHIRT]
+    for x, material in ((-1.47, "accent"), (1.47, "black")):
+        part.extruded(shirt, 0.03, x, 1.4, BOARD_Z + 0.03, material)
+        part.cylinder(0.01, 0.1, x, 1.9, BOARD_Z + 0.02, "steel", segments=6)
+    # Folded shirts on the counter and a clothes rail at the side
+    for i, material in enumerate(("black", "accent", "fabric", "black")):
+        part.box(0.4, 0.05, 0.32, 1.2, 1.06 + i * 0.05, 1.05, material)
+    for i, material in enumerate(("fabric", "black", "fabric")):
+        part.box(0.4, 0.05, 0.32, -1.2, 1.06 + i * 0.05, 1.05, material)
+    part.build()
+
+
+def build_booth_contact():
+    """Info point: leaflets and a desk bell on the counter, a stool behind it."""
+    part = Part("booth_contact", new_collection("booth_contact"))
+    board_frame(part)
+    for i in range(3):
+        part.box(0.26, 0.34, 0.03, -1.3 + i * 0.3, 1.06, 1.05, "paper", rot=(-0.25, 0, 0))
+        part.box(0.28, 0.1, 0.05, -1.3 + i * 0.3, 1.06, 1.08, "black")
+    part.cylinder(0.08, 0.06, 1.3, 1.06, 1.1, "steel", segments=10, radius_top=0.02)
+    part.cylinder(0.02, 0.02, 1.3, 1.12, 1.1, "black", segments=6)
+    part.cylinder(0.2, 0.05, 0.3, 0.75, 0.2, "black", segments=10)
+    part.cylinder(0.03, 0.6, 0.3, 0.16, 0.2, "steel", segments=6)
+    part.build()
+
+
+def build_booth_links():
+    """Links stand: a laptop and a phone on a stand on the counter."""
+    part = Part("booth_links", new_collection("booth_links"))
+    board_frame(part)
+    part.box(0.5, 0.02, 0.34, -1.1, 1.06, 1.05, "steel")
+    part.box(0.5, 0.33, 0.02, -1.1, 1.07, 0.88, "steel", rot=(-0.25, 0, 0))
+    part.box(0.46, 0.29, 0.01, -1.1, 1.09, 0.895, "screen", rot=(-0.25, 0, 0))
+    part.box(0.12, 0.02, 0.1, 1.2, 1.06, 1.1, "black")
+    part.box(0.09, 0.17, 0.012, 1.2, 1.08, 1.08, "black", rot=(-0.3, 0, 0))
+    part.box(0.08, 0.15, 0.005, 1.2, 1.09, 1.087, "screen", rot=(-0.3, 0, 0))
+    part.build()
+
+
+# --- Project items ---------------------------------------------------------------------------
+# One small animated model per project ("the dish on the menu"), shown on the booth counter.
+# Collection `item_<slug>` → public/models/items/<slug>.glb. At most ~0.5 m wide and 0.45 m tall
+# (taller would hide the menu board), standing on y = 0. These are placeholders based only on the
+# project names; replace them with real ones in festival.blend.
+#
+# Animation: keyframes on objects (location / rotation / scale), looping from frame 1 to LOOP + 1
+# with the last key equal to the first. Every object pivots around its own origin, so parts are
+# modelled around (0, 0, 0) and then placed with `place()`.
+
+FPS = 24
+LOOP = 48  # frames per loop (2 seconds)
+
+
+def place(obj, x=0.0, y=0.0, z=0.0, parent=None):
+    """Position an object in three.js space (relative to its parent)."""
+    obj.location = (x, -z, y)
+    if parent is not None:
+        obj.parent = parent
+    return obj
+
+
+def key(obj, frame, loc=None, rot=None, scale=None):
+    """Keyframe in three.js space: loc (x, y, z), rot (x, y, z) radians around three.js axes, uniform scale."""
+    if loc is not None:
+        obj.location = (loc[0], -loc[2], loc[1])
+        obj.keyframe_insert("location", frame=frame)
+    if rot is not None:
+        obj.rotation_euler = (rot[0], -rot[2], rot[1])
+        obj.keyframe_insert("rotation_euler", frame=frame)
+    if scale is not None:
+        obj.scale = (scale, scale, scale)
+        obj.keyframe_insert("scale", frame=frame)
+
+
+def sampled(obj, fn, loop=LOOP, step=3):
+    """Keyframes every `step` frames from fn(t), t in 0..1 over one loop; fn returns key() kwargs."""
+    for frame in range(1, loop + 2, step):
+        key(obj, frame, **fn((frame - 1) / loop))
+    key(obj, loop + 1, **fn(1.0))
+
+
+def wave(t, cycles=1):
+    return math.sin(t * cycles * math.tau)
+
+
+def item_tagrun(col):
+    """TagRun: a running shoe that bobs heel-to-toe."""
+    shoe = Part("tagrun_shoe", col)
+    shoe.box(0.36, 0.05, 0.14, 0, 0, 0, "black", bevel=0.01)
+    shoe.box(0.24, 0.12, 0.13, -0.04, 0.05, 0, "accent", bevel=0.02)
+    shoe.box(0.12, 0.07, 0.13, 0.12, 0.05, 0, "accent", rot=(0, 0, -0.35), bevel=0.02)
+    shoe.box(0.05, 0.1, 0.12, -0.15, 0.14, 0, "black")
+    for i in range(3):
+        shoe.box(0.015, 0.012, 0.1, 0.0 + i * 0.045, 0.172, 0, "paper")
+    obj = place(shoe.build(), 0, 0.02, 0)
+    sampled(obj, lambda t: {
+        "loc": (0, 0.02 + 0.07 * abs(wave(t, 2)), 0),
+        "rot": (0, 0, 0.22 * wave(t, 2)),
+    })
+
+
+def item_xr_posture_checker(col):
+    """XR Posture Checker: a spine that straightens up, with a VR headset floating above it."""
+    base = Part("posture_base", col)
+    base.cylinder(0.12, 0.03, 0, 0, 0, "black", segments=12)
+    parent = place(base.build())
+    count = 7
+    for i in range(count):
+        vertebra = Part(f"posture_vertebra_{i}", col)
+        vertebra.cylinder(0.045 - i * 0.003, 0.03, 0, 0, 0, "paper", segments=8)
+        vertebra.box(0.02, 0.02, 0.04, 0, 0.005, -0.045, "paper")
+        obj = place(vertebra.build(), 0, 0.03 if i == 0 else 0.042, 0, parent)
+        # Slouched → straight → slouched; the bend adds up along the chain
+        sampled(obj, lambda t: {"rot": (0.16 * (0.5 + 0.5 * math.cos(t * math.tau)), 0, 0)})
+        parent = obj
+    headset = Part("posture_headset", col)
+    headset.box(0.16, 0.07, 0.08, 0, 0, 0, "black", bevel=0.015)
+    headset.box(0.14, 0.05, 0.005, 0, 0.01, 0.042, "lens")
+    headset.box(0.18, 0.02, 0.02, 0, 0.03, -0.05, "fabric")
+    obj = place(headset.build(), 0, 0.1, 0, parent)
+    sampled(obj, lambda t: {"loc": (0, 0.1 + 0.015 * wave(t, 2), 0)})
+
+
+def item_puzzle_roulette(col):
+    """Puzzle Roulette: a roulette wheel spinning, with a puzzle piece bobbing in the middle."""
+    stand = Part("roulette_stand", col)
+    stand.cylinder(0.2, 0.06, 0, 0, 0, "wood_dark", segments=16, radius_top=0.22)
+    place(stand.build())
+    wheel = Part("roulette_wheel", col)
+    segments = 12
+    for i in range(segments):
+        a0, a1 = i / segments * math.tau, (i + 1) / segments * math.tau
+        wedge = [(0, 0), (0.19 * math.cos(a0), 0.19 * math.sin(a0)), (0.19 * math.cos(a1), 0.19 * math.sin(a1))]
+        wheel.extruded(wedge, 0.02, 0, 0, 0, "accent" if i % 2 else "black", rot=(-math.pi / 2, 0, 0))
+    wheel.cylinder(0.03, 0.06, 0, 0, 0, "metal", segments=8)
+    obj = place(wheel.build(), 0, 0.07, 0)
+    sampled(obj, lambda t: {"rot": (0, t * math.tau, 0)}, step=4)
+    piece = Part("roulette_piece", col)
+    outline = []
+    for k in range(4):  # a square with a round knob on every side
+        cx, cy = [(0, -1), (1, 0), (0, 1), (-1, 0)][k]
+        tx, ty = -cy, cx
+        outline.append((0.05 * (cx - tx), 0.05 * (cy - ty)))
+        for j in range(5):
+            a = math.pi * j / 4
+            ox, oy = 0.05 * cx + 0.02 * cx * math.sin(a), 0.05 * cy + 0.02 * cy * math.sin(a)
+            outline.append((ox - 0.02 * tx * math.cos(a), oy - 0.02 * ty * math.cos(a)))
+    piece.extruded(outline, 0.025, 0, 0, 0, "paper")
+    obj = place(piece.build(), 0, 0.18, 0)
+    sampled(obj, lambda t: {"loc": (0, 0.18 + 0.03 * wave(t, 2), 0), "rot": (0, -t * math.tau, 0)}, step=4)
+
+
+def item_kitchenapp(col):
+    """KitchenApp: a pan that flips a pancake."""
+    pan = Part("kitchen_pan", col)
+    pan.cylinder(0.13, 0.03, 0, 0, 0, "black", segments=14, radius_top=0.15)
+    pan.box(0.2, 0.02, 0.03, 0.23, 0.02, 0, "wood_dark")
+    obj = place(pan.build(), -0.03, 0.02, 0)
+    sampled(obj, lambda t: {"rot": (0, 0, 0.18 * max(0.0, wave(t)) if t < 0.5 else 0)})
+    cake = Part("kitchen_pancake", col)
+    cake.cylinder(0.1, 0.018, 0, -0.009, 0, "wood", segments=12)
+    obj = place(cake.build(), -0.03, 0.05, 0)
+
+    def flip(t):
+        jump = max(0.0, math.sin(min(t / 0.6, 1.0) * math.pi))  # up and down during the first 60 %
+        turn = min(t / 0.6, 1.0) * math.pi
+        return {"loc": (-0.03, 0.05 + 0.25 * jump, 0), "rot": (turn, 0, 0)}
+
+    sampled(obj, flip, step=2)
+
+
+def item_post_it_machine(col):
+    """Post-It Machine: a small machine that pushes out notes."""
+    machine = Part("postit_machine", col)
+    machine.box(0.26, 0.2, 0.2, 0, 0, 0, "steel", bevel=0.015)
+    machine.box(0.18, 0.012, 0.02, 0, 0.12, 0.1, "black")
+    machine.cylinder(0.02, 0.02, 0.09, 0.2, 0.05, "accent", segments=8)
+    place(machine.build())
+    note = Part("postit_note", col)
+    note.box(0.14, 0.004, 0.14, 0, -0.002, 0, "paper", centered=True)
+    obj = place(note.build(), 0, 0.126, 0.1)
+
+    def out(t):
+        if t < 0.4:  # slides out of the slot
+            return {"loc": (0, 0.126, 0.03 + 0.18 * t / 0.4), "rot": (0, 0, 0), "scale": 1.0}
+        if t < 0.85:  # floats up and turns
+            u = (t - 0.4) / 0.45
+            return {"loc": (0.04 * u, 0.126 + 0.2 * u, 0.21 + 0.05 * u), "rot": (-0.6 * u, 0.8 * u, 0), "scale": 1.0}
+        u = (t - 0.85) / 0.15  # shrinks away, back into the slot for the next loop
+        return {"loc": (0.04, 0.326, 0.26), "rot": (-0.6, 0.8, 0), "scale": max(0.001, 1 - u)}
+
+    sampled(obj, out, step=2)
+    key(obj, LOOP + 1, loc=(0, 0.126, 0.03), rot=(0, 0, 0), scale=1.0)
+
+
+ITEM_BUILDERS = {
+    "tagrun": item_tagrun,
+    "xr-posture-checker": item_xr_posture_checker,
+    "puzzle-roulette": item_puzzle_roulette,
+    "kitchenapp": item_kitchenapp,
+    "post-it-machine": item_post_it_machine,
+}
+
+
+def build_items():
+    scene = bpy.context.scene
+    scene.render.fps = FPS
+    scene.frame_start, scene.frame_end = 1, LOOP + 1
+    # Keys are sampled densely, so straight lines between them keep loops and spins even
+    bpy.context.preferences.edit.keyframe_new_interpolation_type = "LINEAR"
+    for slug, build in ITEM_BUILDERS.items():
+        build(new_collection(f"item_{slug}"))
+    scene.frame_set(1)
 
 
 def build_stage():
@@ -487,9 +783,15 @@ def main():
 
     bpy.ops.wm.read_factory_settings(use_empty=True)
     build_booth()
+    build_booth_projects()
+    build_booth_lab()
+    build_booth_merch()
+    build_booth_contact()
+    build_booth_links()
     build_stage()
     build_foh()
     build_entrance()
+    build_items()
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)
     print(f"Saved {BLEND_PATH}")
 

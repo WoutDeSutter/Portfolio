@@ -147,5 +147,26 @@
   },
   "fallback": {
     "intro": "Je browser kan het 3D-festival niet tonen, dus hier is de tekstversie."
+  },
+  "booths": {
+    "projects": {
+      "board": "Menu"
+    },
+    "lab": {
+      "board": "Op tap",
+      "empty": "Binnenkort op tap"
+    },
+    "merch": {
+      "board": "Merch",
+      "cv": "Cv",
+      "free": "Gratis"
+    },
+    "contact": {
+      "board": "Infopunt"
+    },
+    "links": {
+      "board": "Volg mij",
+      "empty": "Binnenkort"
+    }
   }
 }

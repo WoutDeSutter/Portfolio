@@ -147,5 +147,26 @@
   },
   "fallback": {
     "intro": "Your browser cannot show the 3D festival, so here is the text version."
+  },
+  "booths": {
+    "projects": {
+      "board": "Menu"
+    },
+    "lab": {
+      "board": "On tap",
+      "empty": "Coming soon on tap"
+    },
+    "merch": {
+      "board": "Merch",
+      "cv": "CV",
+      "free": "Free"
+    },
+    "contact": {
+      "board": "Info point"
+    },
+    "links": {
+      "board": "Follow me",
+      "empty": "Coming soon"
+    }
   }
 }

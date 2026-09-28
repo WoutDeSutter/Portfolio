@@ -98,7 +98,7 @@ export function createBooth(materials: GreyboxMaterials, colors: WorldColors): P
   const hitArea = hitBox(4.6, 4.3, 4.2, materials, 0.6);
   group.add(hitArea);
 
-  return withVisual({ group, hitArea, sign, focus: new Vector3(0, 1.8, 0.6) });
+  return withVisual({ group, hitArea, sign, focus: new Vector3(0, 1.65, 0) });
 }
 
 /** Main stage: deck, LED wall (with name and role), truss towers and hanging speakers. */

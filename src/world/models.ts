@@ -3,8 +3,27 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 
 /** The Blender models (blender/festival.blend → public/models/*.glb). */
-export type ModelName = 'booth' | 'stage' | 'foh' | 'entrance';
-const MODEL_NAMES: ModelName[] = ['booth', 'stage', 'foh', 'entrance'];
+export type ModelName =
+  | 'booth'
+  | 'booth_projects'
+  | 'booth_lab'
+  | 'booth_merch'
+  | 'booth_contact'
+  | 'booth_links'
+  | 'stage'
+  | 'foh'
+  | 'entrance';
+const MODEL_NAMES: ModelName[] = [
+  'booth',
+  'booth_projects',
+  'booth_lab',
+  'booth_merch',
+  'booth_contact',
+  'booth_links',
+  'stage',
+  'foh',
+  'entrance',
+];
 
 export type Models = Partial<Record<ModelName, Group>>;
 
