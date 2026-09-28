@@ -56,10 +56,10 @@ src/data/i18n/en.json    # all English text: same keys as nl.json
 
 - `src/content/` — types + typed access to the JSON data
 - `src/i18n/` — `LanguageProvider`, `useTranslation()` (`t` / `tOptional`)
-- `src/stations/` — one view per stage station + `stations.ts` (ids, routes, cue numbers, floor-plan positions)
-- `src/components/` — shared UI (Shell, FloorPlan, ProjectRow, ...)
-- `src/styles/tokens.css` — all theme values
-- `src/scene/` — Three.js layer (planned): reads the current route, never owns content
+- `src/stations/` — one view per stage station + `stations.ts` (ids, routes, cue numbers, floor-plan positions) + `cameraViews.ts` (camera per station, shared by the scene and the floor plan's view cone)
+- `src/components/` — shared UI (Shell, FloorPlan, SceneLayer, ProjectRow, ...)
+- `src/styles/tokens.css` — all theme values (the scene reads its colors from here too)
+- `src/scene/` — plain Three.js, loaded lazily by `SceneLayer` via dynamic import. `createStageScene()` returns `{ goTo, dispose }`; the URL decides the station, the scene never owns content. Shown only at ≥ 48rem with WebGL; reduced motion = camera cuts, no intro/parallax.
 
 Concept: "The Stage" — a black-box XR/stage studio. Red floor paths = navigation, featured projects = projection installations, camera travels between fixed stations. The DOM layer must always work on its own; 3D is an enhancement.
 

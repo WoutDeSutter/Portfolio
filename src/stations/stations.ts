@@ -21,6 +21,12 @@ export const STATIONS: Station[] = [
 
 export const ENTRY = STATIONS[0];
 
+/** World units per floor-plan unit: the 3D stage uses the same layout as the 2D floor plan. */
+export const PLAN_TO_WORLD = 0.15;
+
+/** The tracking-volume boundary on the floor plan (the dashed rectangle). */
+export const PLAN_BOUNDS = { x0: 4, y0: 4, x1: 196, y1: 120 };
+
 /** Which station a URL belongs to. Project pages belong to Work or Lab. */
 export function getStationForPath(pathname: string): Station {
   const projectMatch = pathname.match(/^\/projects\/([^/]+)/);

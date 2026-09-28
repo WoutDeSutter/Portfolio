@@ -67,6 +67,11 @@
 
 .shell__main {
   padding: calc(var(--header-height) + var(--space-12)) var(--gutter) var(--space-16);
+}
+
+/* <main> receives focus after navigation (for screen readers); it is not a control, so no ring */
+.shell__main:focus,
+.shell__main:focus-visible {
   outline: none;
 }
 
@@ -76,6 +81,24 @@
   left: var(--gutter);
   bottom: var(--gutter);
   width: var(--plan-width);
+}
+
+/*
+ * With the 3D stage: the text becomes a narrower column on the left and the stage is
+ * visible on the right. <main> lets clicks through to the stage outside the text column.
+ */
+.shell--scene {
+  --content-max: 34rem;
+}
+
+.shell--scene .shell__main {
+  position: relative;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.shell--scene .shell__main > * {
+  pointer-events: auto;
 }
 
 /* Desktop: keep content clear of the floor plan */
