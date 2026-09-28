@@ -15,7 +15,7 @@
   --color-accent-hover: #ff6a5f;
   --color-accent-dim: rgb(255 59 47 / 0.35);
 
-  /* Typography: IBM Plex, with system fallbacks until the font files are added */
+  /* Typography: IBM Plex (fonts.css), with system fallbacks while loading */
   --font-sans: 'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-mono: 'IBM Plex Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
 

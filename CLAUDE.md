@@ -63,7 +63,7 @@ src/data/i18n/en.json    # all English text: same keys as nl.json
 
 Concept: "The Stage" — a black-box XR/stage studio. Red floor paths = navigation, featured projects = projection installations, camera travels between fixed stations. The DOM layer must always work on its own; 3D is an enhancement.
 
-Fonts: IBM Plex Sans + IBM Plex Mono (self-hosted in `public/fonts`, system fallbacks in `tokens.css`).
+Fonts: IBM Plex Sans + IBM Plex Mono, weights 400/500, Latin1 subsets, self-hosted in `public/fonts` (declared in `src/styles/fonts.css`; Vite rewrites the URLs to relative paths).
 
 Add other data files only when there is a real need.
 
