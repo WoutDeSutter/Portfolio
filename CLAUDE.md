@@ -204,7 +204,9 @@ npm run preview
 
 `package.json` is authoritative once created.
 
-Deployment: a GitHub Actions workflow (`.github/workflows/deploy.yml`) builds the site and publishes `dist/` to GitHub Pages on every push to `main`. Set this up when the first deploy is needed.
+Deployment: `.github/workflows/deploy.yml` builds the site (`npm ci` + `npm run build`, Node 24) and publishes `dist/` to GitHub Pages on every push to `main` (or manually via Actions → Run workflow). A failing type-check stops the deploy.
+
+Domain: the portfolio lives at `portfolio.woutds.be` (DNS at Cloudflare: CNAME `portfolio` → `woutdesutter.github.io`, proxy off so GitHub can issue the HTTPS certificate). `woutds.be` and `www.woutds.be` only redirect there via a Cloudflare Redirect Rule (302, so the apex can be repurposed later without browsers caching the redirect). The custom domain is set in the repo's Pages settings — with a workflow deployment a `CNAME` file is ignored, so there is none.
 
 ## Definition of done
 
