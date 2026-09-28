@@ -25,7 +25,7 @@ import { createLabInstallation } from './installations/lab';
 import type { Installation } from './installations/types';
 import { createWorkInstallation } from './installations/work';
 import type { CameraHeading, HoverInfo, Interactive } from './interactive';
-import { FRAME_SHIFT, FRAME_SHIFT_MIN_WIDTH, cameraTargets, stationPosition } from './layout';
+import { BASE_FOV, cameraTargets, frameCamera, stationPosition } from './layout';
 import { createFloor } from './objects/floor';
 import { createFollowSpot } from './objects/followSpot';
 import { createPrevizMaterials } from './objects/previz';
@@ -69,7 +69,15 @@ type StationVisual = {
   mark: Group;
 };
 
-export function createStageScene(container: HTMLElement, options: StageSceneOptions): StageScene {
+/**
+ * @param container Element the canvas is added to (fills the viewport).
+ * @param freeArea Element marking the area right of the text column; the camera is framed on it.
+ */
+export function createStageScene(
+  container: HTMLElement,
+  freeArea: HTMLElement,
+  options: StageSceneOptions,
+): StageScene {
   const { reducedMotion, onNavigate, onHover, onHeadingChange } = options;
   const colors = readSceneColors();
 
@@ -81,9 +89,10 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
 
   const scene = new Scene();
   // Fog in the background color makes the stage fade into darkness, like a black box.
-  scene.fog = new Fog(colors.bg, 16, 44);
+  // Far enough for the entry overview (~40 units away) to stay visible.
+  scene.fog = new Fog(colors.bg, 20, 62);
 
-  const camera = new PerspectiveCamera(38, 1, 0.1, 100);
+  const camera = new PerspectiveCamera(BASE_FOV, 1, 0.1, 100);
 
   // Floor
   const floor = createFloor(colors);
@@ -244,20 +253,17 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
     renderer.render(scene, camera);
   });
 
-  // Resize with the container; on wide screens frame the stage to the right of the text.
+  // Resize with the container and frame the camera on the free area right of the text.
   const resizeObserver = new ResizeObserver(() => {
     const { clientWidth: width, clientHeight: height } = container;
     if (width === 0 || height === 0) return;
     renderer.setSize(width, height);
-    camera.aspect = width / height;
-    if (width >= FRAME_SHIFT_MIN_WIDTH) {
-      camera.setViewOffset(width, height, -width * FRAME_SHIFT, 0, width, height);
-    } else {
-      camera.clearViewOffset();
-    }
-    camera.updateProjectionMatrix();
+    const containerLeft = container.getBoundingClientRect().left;
+    const free = freeArea.getBoundingClientRect();
+    frameCamera(camera, { width, height }, { left: free.left - containerLeft, width: free.width });
   });
   resizeObserver.observe(container);
+  resizeObserver.observe(freeArea);
 
   // Pointer: parallax everywhere, hover + click on the canvas itself
   const raycaster = new Raycaster();

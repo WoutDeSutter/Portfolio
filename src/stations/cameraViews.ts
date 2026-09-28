@@ -12,16 +12,17 @@ export type CameraView = {
 /**
  * Camera view per station. The scene reports the view it travels to (including focus views
  * on project objects) back to React, which is how the floor plan's view cone follows it.
- * Each view keeps its installation in the area right of the text column at 1440×900
- * (checked by projecting the installation's corners). The entry is an overview of all
- * five stations; it looks at the stage from the Work side.
+ * Views are designed for the free area right of the text column (see `frameCamera` in
+ * scene/layout.ts), so they hold at every screen width. They were fitted by projecting each
+ * installation's corners and keeping them inside that area, looking down ~30°.
+ * The entry is an overview of all five stations; it looks at the stage from the Work side.
  */
 export const CAMERA_VIEWS: Record<StationId, CameraView> = {
-  entry: { position: [21, 17, 0], lookAt: [3, 0, 1.5] },
-  work: { position: [3, 9, 9], lookAt: [0.5, 1.5, 0] },
-  lab: { position: [0.5, 5.5, 9], lookAt: [0, 0.8, -0.6] },
-  about: { position: [2.5, 5, 8], lookAt: [0, 0.6, -0.5] },
-  contact: { position: [0.5, 4.5, 8], lookAt: [0, 1, -0.5] },
+  entry: { position: [31.5, 19.5, 0], lookAt: [-2.7, -0.3, 0] },
+  work: { position: [4.95, 10.1, 12.8], lookAt: [1.15, 1.6, -1.4] },
+  lab: { position: [0.9, 6.65, 9.05], lookAt: [0.05, 0.9, -0.85] },
+  about: { position: [1.9, 4.85, 6.5], lookAt: [0, 0.6, -0.6] },
+  contact: { position: [0.55, 5.2, 6.75], lookAt: [-0.1, 0.95, -0.6] },
 };
 
 /** Camera travel time between stations, in seconds (floor-plan indicator uses the same). */
