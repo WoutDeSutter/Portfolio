@@ -159,9 +159,11 @@ GitHub Pages has no backend: the contact form must use a configurable third-part
 
 ## GitHub Pages
 
-The GitHub repository is named `portfolio` and will get a custom domain (add `public/CNAME` once the domain is known).
+The GitHub repository is `https://github.com/WoutDeSutter/Portfolio` and will get a custom domain (add `public/CNAME` once the domain is known).
 
-Vite uses `base: './'` (relative asset paths). With `HashRouter` the HTML file never moves, so the same build works on `<user>.github.io/portfolio/` and on the custom domain. Do not change this without a reason.
+Vite uses `base: './'` (relative asset paths). With `HashRouter` the HTML file never moves, so the same build works on `woutdesutter.github.io/Portfolio/` and on the custom domain.
+
+Commits in this repo use `desutterwout6@gmail.com` (set in the repo's local Git config). Do not change this without a reason.
 
 Prefer `HashRouter` because GitHub Pages has no normal SPA history fallback. Do not introduce descriptive history-based routes without deliberately solving deployment fallback.
 
