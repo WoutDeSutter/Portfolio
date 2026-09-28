@@ -5,6 +5,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
+  Object3D,
   PlaneGeometry,
   Vector3,
   type Material,
@@ -37,6 +38,8 @@ export function createGreyboxMaterials(colors: WorldColors): GreyboxMaterials {
 
 export type PlaceObject = {
   group: Group;
+  /** The visible block geometry; replaced by the Blender model once that has loaded. */
+  visual: Group;
   /** Invisible box used for hover/click. */
   hitArea?: Mesh;
   sign?: Sign;
@@ -53,6 +56,18 @@ function box(width: number, height: number, depth: number, material: Material, x
   return mesh;
 }
 
+/**
+ * Moves everything except the sign and the click area into a `visual` group, so the world can
+ * swap the blocks for a Blender model while keeping the sign, click area and focus point.
+ */
+function withVisual(object: Omit<PlaceObject, 'visual'>): PlaceObject {
+  const visual = new Group();
+  const keep = new Set<Object3D>([object.sign?.mesh, object.hitArea].filter((item) => item !== undefined));
+  for (const child of [...object.group.children]) if (!keep.has(child)) visual.add(child);
+  object.group.add(visual);
+  return { ...object, visual };
+}
+
 function hitBox(width: number, height: number, depth: number, materials: GreyboxMaterials, z = 0) {
   return box(width, height, depth, materials.hit, 0, 0, z);
 }
@@ -63,7 +78,7 @@ export function createGround(materials: GreyboxMaterials): Mesh {
   return ground;
 }
 
-/** A festival booth: counter at the front, walls, roof and a sign above the opening. */
+/** A booth (a pop-up container in the Blender model): counter at the front, walls, roof and a sign on top. */
 export function createBooth(materials: GreyboxMaterials, colors: WorldColors): PlaceObject {
   const group = new Group();
   const { body, dark } = materials;
@@ -77,13 +92,13 @@ export function createBooth(materials: GreyboxMaterials, colors: WorldColors): P
   group.add(roof);
 
   const sign = new Sign(3.2, 0.8, colors);
-  sign.mesh.position.set(0, 3.5, 1.45);
+  sign.mesh.position.set(0, 3.75, 0.7);
   group.add(sign.mesh);
 
-  const hitArea = hitBox(4, 4, 3.4, materials, 0.2);
+  const hitArea = hitBox(4.6, 4.3, 4.2, materials, 0.6);
   group.add(hitArea);
 
-  return { group, hitArea, sign, focus: new Vector3(0, 1.9, 0.6) };
+  return withVisual({ group, hitArea, sign, focus: new Vector3(0, 1.8, 0.6) });
 }
 
 /** Main stage: deck, LED wall (with name and role), truss towers and hanging speakers. */
@@ -113,7 +128,7 @@ export function createStage(materials: GreyboxMaterials, colors: WorldColors): P
   const hitArea = hitBox(deck.width + 3, trussHeight, deck.depth, materials);
   group.add(hitArea);
 
-  return { group, hitArea, sign, speakers, focus: new Vector3(0, 4, 0) };
+  return withVisual({ group, hitArea, sign, speakers, focus: new Vector3(0, 4, 0) });
 }
 
 /** FOH tent: a raised platform with a mixing desk facing the stage, under a small roof. */
@@ -139,7 +154,7 @@ export function createFoh(materials: GreyboxMaterials): PlaceObject {
   const hitArea = hitBox(5.5, 4.5, 4.5, materials);
   group.add(hitArea);
 
-  return { group, hitArea, focus: new Vector3(0, 1.3, -0.6) };
+  return withVisual({ group, hitArea, focus: new Vector3(0, 1.3, -0.6) });
 }
 
 /** Entrance arch with a banner (name and role), facing the arriving visitor. */
@@ -151,5 +166,5 @@ export function createEntrance(materials: GreyboxMaterials, colors: WorldColors)
   sign.mesh.position.set(0, 4.4, 0.52);
   group.add(sign.mesh);
 
-  return { group, sign, focus: new Vector3() };
+  return withVisual({ group, sign, focus: new Vector3() });
 }

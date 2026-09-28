@@ -4,3 +4,5 @@ dist
 .DS_Store
 Thumbs.db
 *.tsbuildinfo
+*.blend1
+__pycache__/
