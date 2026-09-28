@@ -7,6 +7,7 @@ import {
   Material,
   Mesh,
   MeshBasicMaterial,
+  Object3D,
   PerspectiveCamera,
   PlaneGeometry,
   Raycaster,
@@ -17,18 +18,27 @@ import {
   WebGLRenderer,
 } from 'three';
 import { TRAVEL_DURATION } from '../stations/cameraViews';
-import { ENTRY, STATIONS, type StationId } from '../stations/stations';
+import { ENTRY, STATIONS, findStation, type StationId } from '../stations/stations';
+import { createAboutInstallation } from './installations/about';
+import { createContactInstallation } from './installations/contact';
+import { createLabInstallation } from './installations/lab';
+import type { Installation } from './installations/types';
+import { createWorkInstallation } from './installations/work';
+import type { HoverInfo, Interactive } from './interactive';
 import { FRAME_SHIFT, FRAME_SHIFT_MIN_WIDTH, cameraTargets, stationPosition } from './layout';
 import { createFloor } from './objects/floor';
 import { createFollowSpot } from './objects/followSpot';
+import { createPrevizMaterials } from './objects/previz';
 import { createSpikeMark, createTapeStrip } from './objects/tape';
 import { readSceneColors } from './theme';
 
 export type StageSceneOptions = {
   initialStation: StationId;
   reducedMotion: boolean;
-  /** Called when the visitor clicks a station on the floor. */
-  onSelectStation: (id: StationId) => void;
+  /** Called when the visitor clicks a station mark or a project in the scene. */
+  onNavigate: (path: string) => void;
+  /** Called when the hovered object changes, to show a label next to the cursor. */
+  onHover: (info: HoverInfo | null) => void;
 };
 
 export type StageScene = {
@@ -50,13 +60,12 @@ type StationVisual = {
   id: StationId;
   markMaterial: MeshBasicMaterial;
   pathMaterial?: MeshBasicMaterial;
-  hitArea: Mesh;
   paths: Mesh[];
   mark: Group;
 };
 
 export function createStageScene(container: HTMLElement, options: StageSceneOptions): StageScene {
-  const { reducedMotion, onSelectStation } = options;
+  const { reducedMotion, onNavigate, onHover } = options;
   const colors = readSceneColors();
 
   // Renderer, scene, camera
@@ -76,6 +85,7 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
   scene.add(floor.group);
 
   // Stations: spike marks, tape paths from the entry and invisible click areas
+  const interactives: Interactive[] = [];
   const entryPosition = stationPosition(ENTRY);
   const stations: StationVisual[] = STATIONS.map((station) => {
     const position = stationPosition(station);
@@ -89,10 +99,15 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
       new MeshBasicMaterial({ visible: false }),
     );
     hitArea.position.copy(position);
-    hitArea.userData.stationId = station.id;
     scene.add(hitArea);
+    interactives.push({
+      hitArea,
+      path: station.path,
+      labelKey: `stations.${station.id}`,
+      stationId: station.id,
+    });
 
-    if (station === ENTRY) return { id: station.id, markMaterial, hitArea, paths: [], mark };
+    if (station === ENTRY) return { id: station.id, markMaterial, paths: [], mark };
 
     // The tape runs from the edge of the entry mark to the edge of the station mark.
     const direction = position.clone().sub(entryPosition).normalize();
@@ -101,23 +116,46 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
     const path = createTapeStrip(entryPosition.clone().add(inset), position.clone().sub(inset), pathMaterial);
     scene.add(path);
 
-    return { id: station.id, markMaterial, pathMaterial, hitArea, paths: [path], mark };
+    return { id: station.id, markMaterial, pathMaterial, paths: [path], mark };
   });
+
+  // Installations: the objects at each station (the entry is kept empty on purpose)
+  const previz = createPrevizMaterials(colors);
+  const installations: Partial<Record<StationId, Installation>> = {
+    work: createWorkInstallation(colors, previz),
+    lab: createLabInstallation(colors, previz),
+    about: createAboutInstallation(previz),
+    contact: createContactInstallation(colors, previz),
+  };
+  for (const [id, installation] of Object.entries(installations) as [StationId, Installation][]) {
+    installation.group.position.copy(stationPosition(findStation(id)));
+    scene.add(installation.group);
+    interactives.push(...installation.interactives);
+  }
 
   const followSpot = createFollowSpot(colors);
   scene.add(followSpot);
 
   // Camera state: `cameraBase` and `lookTarget` are animated; parallax is added on top.
   let currentStation = options.initialStation;
-  let hoveredStation: StationId | null = null;
+  let hovered: Interactive | null = null;
+  const activated = new Set<StationId>();
   const cameraBase = new Vector3();
   const lookTarget = new Vector3();
   const pointer = new Vector2();
   const parallax = new Vector2();
   const gsapContext = gsap.context(() => {});
 
+  /** Load an installation's heavier assets the first time the visitor arrives there. */
+  function activate(id: StationId) {
+    if (activated.has(id)) return;
+    activated.add(id);
+    installations[id]?.activate?.();
+  }
+
   function goTo(id: StationId) {
     currentStation = id;
+    activate(id);
     const target = cameraTargets(id);
 
     gsapContext.add(() => {
@@ -140,11 +178,12 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
   cameraBase.copy(initial.camera);
   lookTarget.copy(initial.lookAt);
   followSpot.position.copy(initial.station);
+  activate(currentStation);
 
   // Mark and path highlighting eases towards these values every frame.
   function targetOpacity(id: StationId): number {
     if (id === currentStation) return OPACITY.current;
-    if (id === hoveredStation) return OPACITY.hovered;
+    if (id === hovered?.stationId) return OPACITY.hovered;
     return OPACITY.idle;
   }
 
@@ -189,7 +228,7 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
 
   // Pointer: parallax everywhere, hover + click on the canvas itself
   const raycaster = new Raycaster();
-  const hitAreas = stations.map((station) => station.hitArea);
+  const hitAreas = interactives.map((item) => item.hitArea);
   const canvas = renderer.domElement;
 
   function toNormalized(event: PointerEvent, target: Vector2) {
@@ -200,26 +239,46 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
     );
   }
 
-  function stationAt(event: PointerEvent): StationId | null {
+  /** The interactive under the pointer. Hits on child meshes are traced back to their hit area. */
+  function interactiveAt(event: PointerEvent): Interactive | null {
     const point = new Vector2();
     toNormalized(event, point);
     raycaster.setFromCamera(point, camera);
-    const hit = raycaster.intersectObjects(hitAreas)[0];
-    return hit ? (hit.object.userData.stationId as StationId) : null;
+    const hit = raycaster.intersectObjects(hitAreas, true)[0];
+    for (let object: Object3D | null = hit?.object ?? null; object; object = object.parent) {
+      const match = interactives.find((item) => item.hitArea === object);
+      if (match) return match;
+    }
+    return null;
+  }
+
+  /** The current station's own mark is not a link. */
+  const isActionable = (item: Interactive | null) => item !== null && item.stationId !== currentStation;
+
+  function setHovered(next: Interactive | null) {
+    if (next === hovered) return;
+    hovered?.setHighlighted?.(false);
+    hovered = next;
+    hovered?.setHighlighted?.(true);
+    canvas.style.cursor = hovered ? 'pointer' : '';
   }
 
   const onWindowPointerMove = (event: PointerEvent) => toNormalized(event, pointer);
   const onCanvasPointerMove = (event: PointerEvent) => {
-    hoveredStation = stationAt(event);
-    canvas.style.cursor = hoveredStation && hoveredStation !== currentStation ? 'pointer' : '';
+    const item = interactiveAt(event);
+    setHovered(isActionable(item) ? item : null);
+    onHover(hovered ? { labelKey: hovered.labelKey, clientX: event.clientX, clientY: event.clientY } : null);
   };
   const onCanvasPointerLeave = () => {
-    hoveredStation = null;
-    canvas.style.cursor = '';
+    setHovered(null);
+    onHover(null);
   };
   const onCanvasClick = (event: PointerEvent) => {
-    const id = stationAt(event);
-    if (id && id !== currentStation) onSelectStation(id);
+    const item = interactiveAt(event);
+    if (!isActionable(item)) return;
+    setHovered(null);
+    onHover(null);
+    onNavigate(item!.path);
   };
 
   window.addEventListener('pointermove', onWindowPointerMove);
@@ -244,6 +303,11 @@ export function createStageScene(container: HTMLElement, options: StageSceneOpti
         stations.flatMap((station) => station.paths.map((path) => path.scale)),
         { x: 0, duration: 0.9, stagger: 0.12 },
         0.5,
+      );
+      intro.from(
+        Object.values(installations).map((installation) => installation.group.scale),
+        { y: 0.001, duration: 0.8, stagger: 0.1 },
+        0.9,
       );
     });
   }

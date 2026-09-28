@@ -2,6 +2,7 @@ import { Color } from 'three';
 
 export type SceneColors = {
   bg: Color;
+  surface: Color;
   line: Color;
   lineStrong: Color;
   text: Color;
@@ -15,6 +16,7 @@ export function readSceneColors(): SceneColors {
 
   return {
     bg: token('--color-bg'),
+    surface: token('--color-surface'),
     line: token('--color-line'),
     lineStrong: token('--color-line-strong'),
     text: token('--color-text'),

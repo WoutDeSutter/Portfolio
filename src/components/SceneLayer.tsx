@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useReducedMotion } from '../hooks/useMediaQuery';
+import { useTranslation } from '../i18n/useTranslation';
+import type { HoverInfo } from '../scene/interactive';
 import type { StageScene } from '../scene/StageScene';
-import { findStation, getStationForPath } from '../stations/stations';
+import { getStationForPath } from '../stations/stations';
 import './SceneLayer.css';
 
 /**
@@ -13,6 +15,8 @@ export function SceneLayer() {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<StageScene | null>(null);
   const [isReady, setIsReady] = useState(false);
+  const [hover, setHover] = useState<HoverInfo | null>(null);
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
   const stationId = getStationForPath(useLocation().pathname).id;
@@ -34,7 +38,8 @@ export function SceneLayer() {
         sceneRef.current = createStageScene(containerRef.current, {
           initialStation: stationIdRef.current,
           reducedMotion,
-          onSelectStation: (id) => navigate(findStation(id).path),
+          onNavigate: (path) => navigate(path),
+          onHover: setHover,
         });
         setIsReady(true);
       })
@@ -48,14 +53,27 @@ export function SceneLayer() {
       sceneRef.current?.dispose();
       sceneRef.current = null;
       setIsReady(false);
+      setHover(null);
     };
   }, [reducedMotion, navigate]);
 
   return (
-    <div
-      ref={containerRef}
-      className={isReady ? 'scene-layer scene-layer--ready' : 'scene-layer'}
-      aria-hidden="true"
-    />
+    <>
+      <div
+        ref={containerRef}
+        className={isReady ? 'scene-layer scene-layer--ready' : 'scene-layer'}
+        aria-hidden="true"
+      />
+      {/* Contextual label next to the cursor; the same destinations are links in the page itself. */}
+      {hover && (
+        <div
+          className="scene-label label"
+          aria-hidden="true"
+          style={{ transform: `translate(${hover.clientX}px, ${hover.clientY}px)` }}
+        >
+          {t(hover.labelKey)}
+        </div>
+      )}
+    </>
   );
 }

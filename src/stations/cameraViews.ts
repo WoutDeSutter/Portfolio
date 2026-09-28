@@ -11,15 +11,16 @@ export type CameraView = {
 
 /**
  * Camera view per station, shared by the 3D scene and the floor plan's view indicator.
- * The entry is an overview that fits all five stations in the area right of the text column
- * (found with a small search over camera positions); it looks at the stage from the Work side.
+ * Each view keeps its installation in the area right of the text column at 1440×900
+ * (checked by projecting the installation's corners). The entry is an overview of all
+ * five stations; it looks at the stage from the Work side.
  */
 export const CAMERA_VIEWS: Record<StationId, CameraView> = {
   entry: { position: [21, 17, 0], lookAt: [3, 0, 1.5] },
-  work: { position: [-3, 6.5, 12], lookAt: [0, 0.5, 0] },
-  lab: { position: [0, 6.5, 12], lookAt: [0, 0.5, 0] },
-  about: { position: [3, 6.5, 12], lookAt: [0, 0.5, 0] },
-  contact: { position: [0, 6.5, 12], lookAt: [0, 0.5, 0] },
+  work: { position: [3, 9, 9], lookAt: [0.5, 1.5, 0] },
+  lab: { position: [0.5, 5.5, 9], lookAt: [0, 0.8, -0.6] },
+  about: { position: [2.5, 5, 8], lookAt: [0, 0.6, -0.5] },
+  contact: { position: [0.5, 4.5, 8], lookAt: [0, 1, -0.5] },
 };
 
 /** Camera travel time between stations, in seconds (floor-plan indicator uses the same). */
