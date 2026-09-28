@@ -59,6 +59,7 @@ export type FestivalWorld = {
 /** The overview from behind the entrance, looking over the whole terrain towards the stage. */
 const OVERVIEW: View = { target: new Vector3(0, 1, -2), theta: 0, phi: 0.95, radius: 36 };
 const CLICK_TOLERANCE = 5; // pixels a pointer may move and still count as a click
+const PINCH_SPEED = 3; // zoom per pixel the fingers move together/apart
 
 export function createFestivalWorld(container: HTMLElement, options: WorldOptions): FestivalWorld {
   const { reducedMotion, onNavigate, onHover } = options;
@@ -185,6 +186,13 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
   );
   let hovered: PlaceId | null = null;
   let press: { x: number; y: number; lastX: number; lastY: number; dragged: boolean } | null = null;
+  // Touch: every finger on the screen, so two of them can pinch to zoom.
+  const touches = new Map<number, { x: number; y: number }>();
+  let pinchDistance = 0;
+  const touchDistance = () => {
+    const [a, b] = [...touches.values()];
+    return Math.hypot(a.x - b.x, a.y - b.y);
+  };
 
   function toNormalized(event: PointerEvent, target: Vector2) {
     const rect = canvas.getBoundingClientRect();
@@ -213,11 +221,31 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
   }
 
   const onPointerDown = (event: PointerEvent) => {
-    press = { x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, dragged: false };
     canvas.setPointerCapture(event.pointerId);
+    if (event.pointerType === 'touch') {
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (touches.size === 2) {
+        // A second finger: this is a pinch, not a tap or a drag.
+        press = null;
+        pinchDistance = touchDistance();
+        return;
+      }
+      if (touches.size > 2) return;
+    }
+    press = { x: event.clientX, y: event.clientY, lastX: event.clientX, lastY: event.clientY, dragged: false };
   };
   const onPointerMove = (event: PointerEvent) => {
-    toNormalized(event, pointer);
+    if (touches.has(event.pointerId)) {
+      touches.set(event.pointerId, { x: event.clientX, y: event.clientY });
+      if (touches.size >= 2) {
+        const distance = touchDistance();
+        rig.zoom((pinchDistance - distance) * PINCH_SPEED);
+        pinchDistance = distance;
+        return;
+      }
+    }
+    // Touch has no cursor to follow: only a mouse makes the camera look around.
+    if (event.pointerType === 'mouse') toNormalized(event, pointer);
     if (press) {
       if (!press.dragged && Math.hypot(event.clientX - press.x, event.clientY - press.y) > CLICK_TOLERANCE) {
         press.dragged = true;
@@ -233,6 +261,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     setHovered(id && id !== currentPlace ? id : null, event);
   };
   const onPointerUp = (event: PointerEvent) => {
+    touches.delete(event.pointerId);
     const wasClick = press && !press.dragged;
     press = null;
     canvas.style.cursor = '';

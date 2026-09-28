@@ -120,9 +120,14 @@ export class CameraRig {
     camera.position.copy(position);
     camera.lookAt(target);
     if (frameChanged) {
-      if (this.frame.x || this.frame.y) camera.setViewOffset(width, height, this.frame.x, this.frame.y, width, height);
+      // The projection is made for the visible area only (the screen minus the panel), and the
+      // canvas shows that image plus the strip behind the panel. So a bottom sheet doesn't zoom
+      // the view in: the place stays framed in the part of the screen that is still visible.
+      const visibleWidth = Math.max(width - this.frame.x * 2, 1);
+      const visibleHeight = Math.max(height - this.frame.y * 2, 1);
+      if (this.frame.x || this.frame.y) camera.setViewOffset(visibleWidth, visibleHeight, 0, 0, width, height);
       else camera.clearViewOffset();
-      camera.aspect = width / height;
+      camera.aspect = visibleWidth / visibleHeight;
       camera.fov = fov;
       camera.updateProjectionMatrix();
     }
