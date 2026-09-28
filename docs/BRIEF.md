@@ -84,22 +84,22 @@ Do not assume project details that have not been provided.
 
 The portfolio should not behave like a conventional website made of a header, hero, three cards, and a long scrolling list.
 
-The desired direction is an **interactive XR-inspired world**.
+The chosen direction is a **fully 3D, interactive festival terrain at night**. Wout works in the stage/event industry, so the festival is his own world: the site is the place, not a page with 3D added.
 
-The visitor should feel as though they are exploring a digital environment containing Wout's work.
+Layout (seen from the entrance):
 
-Possible world concepts include:
+- **Entrance** (front) — arrival point; the camera starts here with an overview of the whole terrain. Name and role on the entrance arch.
+- **Main stage** (back, centre) — **About me**. Truss, LED wall with Wout's name and role, stage lighting in red.
+- **Audience field** between entrance and stage.
+- **FOH tent** (centre of the field) — the front-of-house mix position Wout often works from in real life. An **easter egg**: from the desk the visitor chooses, starts and stops music on the speakers and controls the stage lights.
+- **Booths on the left**: **Projects** (a food truck; the projects are its menu), **Lab** (a drinks stand; experiments are what's "on tap").
+- **Booths on the right**: **Contact** (the info point), **Links** (socials), **Merch** (CV download — take the "merch" home).
 
-- a futuristic studio
-- an XR laboratory
-- a digital workshop
-- an interactive house/studio
-- a hybrid physical/digital exhibition space
-- a small connected world with different areas
+Booth signs carry the section name (Projects, Lab, Contact, Links, Merch) instead of food or drinks.
 
-The exact concept should be explored visually before committing to one implementation.
+An earlier concept ("The Stage", a black-box studio) was built and archived on `archive/stage-v1`: it worked, but felt too much like a website with a 3D background. The festival must feel like exploring a place.
 
-The environment should feel professional and intentional rather than like a video game for its own sake.
+The environment should feel professional and intentional rather than like a video game for its own sake: short distances, clear signs, everything reachable within seconds.
 
 The inspiration is the feeling of interactive portfolio sites such as `pavlo-stijn.dev`, not a direct visual or structural copy.
 
@@ -111,28 +111,15 @@ https://pavlo-stijn.dev/
 
 ## 6. Spatial navigation
 
-A possible navigation model is to represent portfolio sections as locations in the environment.
+Every portfolio section is a place on the terrain. Navigation happens **in the world**:
 
-For example:
+- **Look around**: the camera follows the cursor; dragging orbits within limits so the visitor never gets lost; limited zoom.
+- **Hover** a booth or the stage: its sign lights up and a short label appears.
+- **Click**: the camera travels there, the booth opens (e.g. shutters roll up) and its content appears as an HTML panel next to it.
+- **Back**: a back control in the panel, Esc, or clicking beside the booth returns to the overview.
+- Inside a booth, items are clickable too (e.g. a project on the Projects menu opens its case study).
 
-- Featured Projects area
-- Project gallery
-- LAB / Experiments area
-- About / Profile area
-- CV area
-- Contact area
-
-The visitor may move between these locations through an interactive 3D environment.
-
-A subtle directional navigation system inspired by game-world navigation may be considered, such as:
-
-- floor arrows
-- highlighted paths
-- environmental markers
-- subtle waypoint indicators
-- contextual labels
-
-These elements must remain elegant and professional.
+There is **no visible interface chrome** — no header, logo bar, menu or minimap. The only permanent control is the EN/NL toggle (plus a mute button while music plays). Signs, lights and the camera itself are the wayfinding.
 
 Do not make the interface resemble a literal game HUD.
 
@@ -156,20 +143,14 @@ A recruiter should not have to navigate through the 3D environment to reach a pr
 
 ## 8. Homepage
 
-The homepage should introduce Wout quickly while allowing the immersive environment to become the main experience.
+There is no conventional homepage: the first view is the festival terrain from the entrance.
 
-The exact headline/copy will be written later.
+Within the first seconds the visitor must understand:
 
-Possible information hierarchy:
+1. Wout De Sutter — XR Student MCT (on the entrance arch / LED wall)
+2. that the booths and the stage can be explored (signs, hover, a subtle hint)
 
-1. Wout De Sutter
-2. XR Student MCT
-3. short introduction
-4. invitation to explore
-5. immersive environment
-6. selected work
-
-The homepage should not become a wall of text.
+The exact copy will be written later. No walls of text in the world; text lives in the panels.
 
 ---
 
@@ -544,15 +525,12 @@ Mobile support must be excellent.
 
 The desktop immersive experience does not have to be copied literally onto mobile.
 
-Instead, mobile can use a simplified version of the same world and visual language.
+Mobile uses the **same festival** with touch controls:
 
-Possible mobile behavior:
-
-- simplified 3D
-- touch-friendly navigation
-- reduced environmental detail
-- direct project browsing
-- fewer simultaneous effects
+- drag to look around, tap a booth to go there
+- panels open as bottom sheets
+- lower detail (pixel ratio, fewer lights/effects) to keep it smooth
+- a text-only fallback when WebGL is unavailable
 
 The content hierarchy must remain consistent.
 
@@ -677,13 +655,11 @@ The font should not make the site look childish or like a stereotypical sci-fi g
 
 The user does not want a conventional website full of tabs.
 
-The primary navigation should therefore be spatial/immersive where practical.
+Navigation is fully spatial (see §6): no visible menus, header, logo bar or minimap.
 
-However, usability must remain more important than novelty.
+Usability still comes before novelty: every place is visible from the overview and one click away.
 
-Important destinations must remain easy to reach.
-
-A small conventional UI layer may exist for accessibility and direct access.
+For keyboard and screen-reader users there is a hotspot button per place, **only visible when it receives keyboard focus**; direct URLs work for every place and project; without WebGL a text version with ordinary navigation is shown.
 
 ---
 
@@ -706,31 +682,22 @@ It must remain usable and must not hide important feedback.
 
 ## 33. Scroll
 
-The exact scroll model has not been decided.
+The page itself does not scroll. In the world, the scroll wheel / pinch zooms the camera a little (within limits).
 
-Do not force a conventional long-scrolling page if spatial navigation is more appropriate.
-
-Possible techniques:
-
-- smooth scroll
-- scroll-driven environmental animation
-- camera movement
-- spatial transitions
-- normal scrolling within project case studies
-
-Use whichever model produces the clearest experience.
+Panels scroll normally inside themselves (e.g. a long case study).
 
 ---
 
 ## 34. Audio
 
-No ambient website audio is planned at this stage.
+Audio is a deliberate **easter egg in the FOH tent**:
+
+- At the FOH desk the visitor chooses a track, starts and stops it, and can control the stage lights.
+- The music plays from the **speakers on the terrain** as positional audio: moving towards a booth on the right makes the stage sound come more from the left, like at a real festival. The sound may also react to where the cursor looks.
+- Tracks are NCS songs supplied by Wout, stored in a folder with their title/artist listed as data; the FOH shows the credit while a track plays. Check NCS's usage terms for websites.
+- **Never autoplay.** While music plays, a mute button appears next to the language toggle.
 
 Project videos may contain their own audio.
-
-Do not autoplay music.
-
-Audio may be considered later if it becomes a deliberate part of the experience.
 
 ---
 
@@ -898,25 +865,17 @@ Development commands, deployment, and Git conventions are defined in `CLAUDE.md`
 
 ## 43. Build order
 
-A sensible implementation sequence is:
+The project setup, content model, translations, case studies, contact form and deployment already exist (built for v1, reused). The festival is built in this order:
 
-1. Initialize React + TypeScript + Vite.
-2. Establish the global CSS/theme.
-3. Create the basic application shell.
-4. Create JSON content models.
-5. Create the project system.
-6. Create direct project routes.
-7. Prototype the immersive environment.
-8. Connect projects to the environment.
-9. Add LAB.
-10. Add About/CV/Contact.
-11. Add responsive behavior.
-12. Add progressive loading/performance optimizations.
-13. Add polished animations.
-14. Test GitHub Pages deployment.
-15. Perform accessibility and mobile checks.
+1. **Greybox**: the terrain with simple blocks (entrance, stage, FOH, booths), camera look-around/orbit, hover + click to travel, HTML panels with the existing content, routes per place. Validate that exploring *feels* good before modelling.
+2. Accessibility and fallback: focus-visible hotspots, panel focus management, reduced motion, no-WebGL text version.
+3. Mobile: touch controls, bottom-sheet panels, lower detail.
+4. Low-poly models from Blender (booths, stage, FOH, props) replacing the greybox blocks; lighting and night atmosphere.
+5. Booth interiors: the Projects menu, Lab items, Merch CV, info point.
+6. FOH easter egg: music (positional audio, credits, mute button) and light control.
+7. Performance pass (model sizes, on-demand rendering, loading) and final checks.
 
-Do not build the entire 3D world before the content architecture and basic project browsing work.
+Do not model or polish before the greybox interaction feels right.
 
 ---
 
