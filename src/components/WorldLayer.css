@@ -1,0 +1,49 @@
+.world {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity 1.2s var(--ease-out);
+}
+
+.world--ready {
+  opacity: 1;
+}
+
+.world canvas {
+  display: block;
+}
+
+/* While the world loads: a thin line pulsing at the bottom, nothing more. */
+.world__loading {
+  position: fixed;
+  left: 50%;
+  bottom: var(--space-8);
+  width: 6rem;
+  height: 1px;
+  translate: -50% 0;
+  background: var(--color-accent);
+  animation: world-loading 1.4s var(--ease-out) infinite alternate;
+}
+
+@keyframes world-loading {
+  from {
+    opacity: 0.2;
+    scale: 0.3 1;
+  }
+}
+
+/* Label next to the cursor when hovering a place */
+.world-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  margin: 1rem 0 0 1rem;
+  padding: var(--space-1) var(--space-2);
+  border-left: 2px solid var(--color-accent);
+  background: var(--color-bg);
+  color: var(--color-text);
+  white-space: nowrap;
+  pointer-events: none;
+}

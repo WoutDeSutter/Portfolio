@@ -1,0 +1,97 @@
+/* Shared pieces inside panels */
+
+.panel-intro {
+  color: var(--color-text-muted);
+}
+
+.panel-empty {
+  color: var(--color-text-muted);
+}
+
+.panel-section {
+  display: grid;
+  gap: var(--space-2);
+}
+
+/* Skills (About) */
+
+.skills {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: var(--space-6);
+  margin-top: var(--space-2);
+}
+
+.skills__group {
+  display: grid;
+  align-content: start;
+  gap: var(--space-3);
+}
+
+.skills__group-title {
+  font-size: var(--text-base);
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border);
+}
+
+.skills__list {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.skills__item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.skills__used-in {
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* Contact channels (Contact, Links) */
+
+.channels {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.channels__item {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  align-items: baseline;
+  padding-top: var(--space-4);
+  border-top: var(--border);
+}
+
+.channels a {
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.25em;
+}
+
+/* Button (Merch CV download) */
+
+.button {
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius);
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.button--accent {
+  border-color: var(--color-accent);
+}
+
+.button:hover {
+  border-color: var(--color-accent-hover);
+}
