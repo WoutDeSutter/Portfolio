@@ -1,4 +1,4 @@
-import { Vector3 } from 'three';
+import { MathUtils, PerspectiveCamera, Vector3 } from 'three';
 import { CAMERA_VIEWS } from '../stations/cameraViews';
 import {
   ENTRY,
@@ -35,6 +35,39 @@ export function cameraTargets(id: StationId) {
   };
 }
 
-/** On wide screens the text column covers the left side, so the stage is framed to the right. */
-export const FRAME_SHIFT = 0.22;
-export const FRAME_SHIFT_MIN_WIDTH = 768;
+export const BASE_FOV = 38;
+
+/**
+ * The camera views are designed for the free area right of the text column at 1440×900
+ * (568×900 px). Its aspect ratio is the reference: on narrower free areas the field of view
+ * widens so the same things stay in frame; on wider ones the picture just shows more around it.
+ */
+const DESIGN_ASPECT = 568 / 900;
+const DESIGN_HALF_HFOV = Math.atan(Math.tan(MathUtils.degToRad(BASE_FOV / 2)) * DESIGN_ASPECT);
+
+/**
+ * Renders the camera as if the free area were the whole screen: the view fills the free area
+ * exactly, and the canvas to the left of it (behind the text) continues the same picture.
+ */
+export function frameCamera(
+  camera: PerspectiveCamera,
+  canvas: { width: number; height: number },
+  free: { left: number; width: number },
+) {
+  if (free.width <= 0) {
+    camera.aspect = canvas.width / canvas.height;
+    camera.fov = BASE_FOV;
+    camera.clearViewOffset();
+  } else {
+    const aspect = free.width / canvas.height;
+    camera.aspect = aspect;
+    camera.fov =
+      aspect < DESIGN_ASPECT
+        ? MathUtils.radToDeg(2 * Math.atan(Math.tan(DESIGN_HALF_HFOV) / aspect))
+        : BASE_FOV;
+    // Show the region from -free.left to the canvas' right edge of a virtual image that is
+    // exactly as wide as the free area.
+    camera.setViewOffset(free.width, canvas.height, -free.left, 0, canvas.width, canvas.height);
+  }
+  camera.updateProjectionMatrix();
+}

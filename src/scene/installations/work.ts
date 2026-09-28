@@ -32,11 +32,11 @@ const CASE = { width: 1.1, height: 0.7, depth: 0.8, x: 3.4, firstZ: 1.6, stepZ: 
 const BEAM_OPACITY = { idle: 0.05, highlighted: 0.12 };
 /**
  * Camera on a project page, relative to the object: in front and slightly to the right,
- * far enough that the object stays right of the text column (checked at 1440×900).
+ * fitted to the free area right of the text column like the station views.
  */
 const FOCUS = {
-  screen: { position: new Vector3(2.2, 3.2, 9.5), lookAt: new Vector3(0, 1.8, 0) },
-  flightCase: { position: new Vector3(2.4, 2.6, 4.2), lookAt: new Vector3(0, 0.35, 0) },
+  screen: { position: new Vector3(3.3, 6.3, 7.05), lookAt: new Vector3(0, 1.8, 0) },
+  flightCase: { position: new Vector3(1.65, 2.9, 3.4), lookAt: new Vector3(0, 0.65, -0.15) },
 };
 
 export function createWorkInstallation(colors: SceneColors, materials: PrevizMaterials): Installation {

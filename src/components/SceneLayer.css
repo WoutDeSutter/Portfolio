@@ -29,7 +29,14 @@
   pointer-events: none;
 }
 
-/* Keeps the text column readable where it overlaps the stage */
+/* The free area right of the text column. Invisible; the scene measures it to frame the camera. */
+.scene-layer__free {
+  position: absolute;
+  inset: 0 0 0 var(--column-end);
+  pointer-events: none;
+}
+
+/* Keeps the text column readable where it overlaps the stage; fades out at the column's end */
 .scene-layer::after {
   content: '';
   position: absolute;
@@ -37,8 +44,9 @@
   pointer-events: none;
   background: linear-gradient(
     to right,
-    var(--color-bg) 0%,
-    color-mix(in srgb, var(--color-bg) 85%, transparent) 35%,
-    transparent 62%
+    var(--color-bg) 0,
+    var(--color-bg) calc(var(--column-end) - 14rem),
+    color-mix(in srgb, var(--color-bg) 80%, transparent) calc(var(--column-end) - 4rem),
+    transparent calc(var(--column-end) + 3rem)
   );
 }

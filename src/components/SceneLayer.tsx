@@ -18,6 +18,7 @@ type SceneLayerProps = {
  */
 export function SceneLayer({ onHeadingChange }: SceneLayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const freeAreaRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<StageScene | null>(null);
   const [isReady, setIsReady] = useState(false);
   const [hover, setHover] = useState<HoverInfo | null>(null);
@@ -47,8 +48,8 @@ export function SceneLayer({ onHeadingChange }: SceneLayerProps) {
     // Dynamic import: Three.js is downloaded as a separate file, only when the 3D stage is used.
     import('../scene/StageScene')
       .then(({ createStageScene }) => {
-        if (cancelled || !containerRef.current) return;
-        sceneRef.current = createStageScene(containerRef.current, {
+        if (cancelled || !containerRef.current || !freeAreaRef.current) return;
+        sceneRef.current = createStageScene(containerRef.current, freeAreaRef.current, {
           initialStation: viewRef.current.stationId,
           initialProject: viewRef.current.projectSlug,
           reducedMotion,
@@ -78,7 +79,10 @@ export function SceneLayer({ onHeadingChange }: SceneLayerProps) {
         ref={containerRef}
         className={isReady ? 'scene-layer scene-layer--ready' : 'scene-layer'}
         aria-hidden="true"
-      />
+      >
+        {/* Marks the free area right of the text column (positioned in CSS); the scene measures it. */}
+        <div ref={freeAreaRef} className="scene-layer__free" />
+      </div>
       {/* Contextual label next to the cursor; the same destinations are links in the page itself. */}
       {hover && (
         <div

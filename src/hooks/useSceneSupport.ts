@@ -1,7 +1,10 @@
 import { useMediaQuery } from './useMediaQuery';
 
-/** Same breakpoint as the CSS: below it the site uses flat mode without live 3D. */
-const SCENE_MEDIA_QUERY = '(min-width: 48rem)';
+/**
+ * Below 64rem (tablet portrait, phones) the site uses flat mode without live 3D:
+ * next to the text column there would only be a narrow strip left for the stage.
+ */
+const SCENE_MEDIA_QUERY = '(min-width: 64rem)';
 
 let webGLSupported: boolean | undefined;
 

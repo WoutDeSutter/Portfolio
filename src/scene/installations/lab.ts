@@ -9,7 +9,7 @@ const BENCH = { width: 4.2, height: 0.9, depth: 1.1, z: -1.4, top: 0.06, leg: 0.
 const PEGBOARD = { height: 1.3, z: -2.05 };
 const ITEM = { size: 0.34, spacing: 0.62 };
 /** Camera on a LAB entry's page, relative to its object on the bench. */
-const FOCUS = { position: new Vector3(0.5, 1.4, 2.2), lookAt: new Vector3(0, 0.2, 0) };
+const FOCUS = { position: new Vector3(0.3, 0.9, 1.7), lookAt: new Vector3(0, 0.1, 0) };
 
 /** Lab: a workbench with a pegboard. Every LAB entry from projects.json is a small object on the bench. */
 export function createLabInstallation(colors: SceneColors, materials: PrevizMaterials): Installation {
