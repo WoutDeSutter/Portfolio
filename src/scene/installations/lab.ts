@@ -1,4 +1,4 @@
-import { Group, LineBasicMaterial } from 'three';
+import { Group, LineBasicMaterial, Vector3 } from 'three';
 import { getProjectsByKind } from '../../content/content';
 import type { Interactive } from '../interactive';
 import { createBox, type PrevizMaterials } from '../objects/previz';
@@ -8,6 +8,8 @@ import type { Installation } from './types';
 const BENCH = { width: 4.2, height: 0.9, depth: 1.1, z: -1.4, top: 0.06, leg: 0.06 };
 const PEGBOARD = { height: 1.3, z: -2.05 };
 const ITEM = { size: 0.34, spacing: 0.62 };
+/** Camera on a LAB entry's page, relative to its object on the bench. */
+const FOCUS = { position: new Vector3(0.5, 1.4, 2.2), lookAt: new Vector3(0, 0.2, 0) };
 
 /** Lab: a workbench with a pegboard. Every LAB entry from projects.json is a small object on the bench. */
 export function createLabInstallation(colors: SceneColors, materials: PrevizMaterials): Installation {
@@ -42,6 +44,11 @@ export function createLabInstallation(colors: SceneColors, materials: PrevizMate
       hitArea: item,
       path: `/projects/${project.slug}`,
       labelKey: `projects.${project.slug}.title`,
+      slug: project.slug,
+      focus: {
+        position: item.position.clone().add(FOCUS.position),
+        lookAt: item.position.clone().add(FOCUS.lookAt),
+      },
       setHighlighted: (on) => edge.color.copy(on ? colors.accent : colors.lineStrong),
     });
   });

@@ -2,6 +2,8 @@
 
 ## Brief
 
+`docs/CONTENT.md` explains how to add projects, text, media and demos; keep it in sync when the content model changes.
+
 `docs/BRIEF.md` contains the complete design/product brief. Read it before design, UX, content-model, or feature decisions. This file contains only permanent working rules; do not duplicate the full brief here, and keep working rules (stack, commands, Git, deployment) here rather than in the brief.
 
 ## Goal
@@ -60,7 +62,8 @@ src/data/i18n/en.json    # all English text: same keys as nl.json
 - `src/components/` — shared UI (Shell, FloorPlan, SceneLayer, ProjectRow, ...)
 - `src/styles/tokens.css` — all theme values (the scene reads its colors from here too)
 - `src/scene/` — plain Three.js, loaded lazily by `SceneLayer` via dynamic import. `createStageScene()` returns `{ goTo, dispose }`; the URL decides the station, the scene never owns content. Shown only at ≥ 48rem with WebGL; reduced motion = camera cuts, no intro/parallax.
-- `src/scene/installations/` — objects per station, generated from `projects.json`: Work = projection screens (featured, in a corridor that grows backwards) + flight cases (project), Lab = workbench with one object per `lab` entry, About = FOH desk, Contact = stage door. Hovering shows a translated label (`SceneLayer`), clicking navigates.
+- `src/scene/installations/` — objects per station, generated from `projects.json`: Work = projection screens (featured, in a corridor that grows backwards) + flight cases (project), Lab = workbench with one object per `lab` entry, About = FOH desk, Contact = stage door. Hovering shows a translated label (`SceneLayer`), clicking navigates. On a project page the camera focuses on that project's object (`Interactive.focus`) and keeps it highlighted.
+- The scene reports where its camera goes (`onHeadingChange`); `Shell` holds that state and the floor plan's view cone reads it.
 - 3D style is "previz": dark faces + thin light edges (`objects/previz.ts`); red only for wayfinding and hover. When changing an installation's size, re-check that its camera view in `cameraViews.ts` keeps it right of the text column.
 
 Concept: "The Stage" — a black-box XR/stage studio. Red floor paths = navigation, featured projects = projection installations, camera travels between fixed stations. The DOM layer must always work on its own; 3D is an enhancement.

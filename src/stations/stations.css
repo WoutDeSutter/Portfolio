@@ -4,6 +4,8 @@
   display: grid;
   gap: var(--space-12);
   max-width: var(--content-max);
+  /* Lets components adapt to the column width with @container queries */
+  container-type: inline-size;
   animation: station-enter var(--duration-base) var(--ease-out);
 }
 

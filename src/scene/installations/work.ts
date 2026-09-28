@@ -30,6 +30,14 @@ const PROJECTOR = { height: 3.4, throw: 3.6, pipeHeight: 3.8 };
 /** Smaller projects are flight cases in a line along the right side. */
 const CASE = { width: 1.1, height: 0.7, depth: 0.8, x: 3.4, firstZ: 1.6, stepZ: -1.2 };
 const BEAM_OPACITY = { idle: 0.05, highlighted: 0.12 };
+/**
+ * Camera on a project page, relative to the object: in front and slightly to the right,
+ * far enough that the object stays right of the text column (checked at 1440×900).
+ */
+const FOCUS = {
+  screen: { position: new Vector3(2.2, 3.2, 9.5), lookAt: new Vector3(0, 1.8, 0) },
+  flightCase: { position: new Vector3(2.4, 2.6, 4.2), lookAt: new Vector3(0, 0.35, 0) },
+};
 
 export function createWorkInstallation(colors: SceneColors, materials: PrevizMaterials): Installation {
   const group = new Group();
@@ -46,7 +54,13 @@ export function createWorkInstallation(colors: SceneColors, materials: PrevizMat
     const { object, interactive, surface } = createProjection(project, colors, materials);
     object.position.copy(position);
     group.add(object);
-    interactives.push(interactive);
+    interactives.push({
+      ...interactive,
+      focus: {
+        position: position.clone().add(FOCUS.screen.position),
+        lookAt: position.clone().add(FOCUS.screen.lookAt),
+      },
+    });
     screens.push({ project, surface });
   });
 
@@ -79,6 +93,11 @@ export function createWorkInstallation(colors: SceneColors, materials: PrevizMat
       hitArea: flightCase,
       path: `/projects/${project.slug}`,
       labelKey: `projects.${project.slug}.title`,
+      slug: project.slug,
+      focus: {
+        position: flightCase.position.clone().add(FOCUS.flightCase.position),
+        lookAt: flightCase.position.clone().add(FOCUS.flightCase.lookAt),
+      },
       setHighlighted: (on) => edge.color.copy(on ? colors.accent : colors.lineStrong),
     });
   });
@@ -121,7 +140,8 @@ function createProjection(project: Project, colors: SceneColors, materials: Prev
       line: `#${colors.lineStrong.getHexString()}`,
       accent: `#${colors.accent.getHexString()}`,
     }),
-    color: colors.text.clone().multiplyScalar(0.85),
+    // Slightly dimmed, like a projection in a dark room, so bright images don't outshine the text.
+    color: colors.text.clone().multiplyScalar(0.6),
   });
   const screen = new Mesh(new PlaneGeometry(SCREEN.width, SCREEN.height), surface);
   screen.position.set(0, SCREEN.bottom + SCREEN.height / 2, 0.001);
@@ -151,6 +171,7 @@ function createProjection(project: Project, colors: SceneColors, materials: Prev
     hitArea: screen,
     path: `/projects/${project.slug}`,
     labelKey: `projects.${project.slug}.title`,
+    slug: project.slug,
     setHighlighted: (on) => {
       frameEdge.color.copy(on ? colors.accent : colors.lineStrong);
       beamMaterial.opacity = on ? BEAM_OPACITY.highlighted : BEAM_OPACITY.idle;

@@ -1,27 +1,26 @@
 import { useEffect, useRef } from 'react';
 import { Link, useLocation } from 'react-router';
 import { useTranslation } from '../i18n/useTranslation';
-import { CAMERA_VIEWS } from '../stations/cameraViews';
+import type { CameraHeading } from '../scene/interactive';
 import {
   ENTRY,
   PLAN_BOUNDS,
   PLAN_TO_WORLD,
   STATIONS,
   getStationForPath,
-  type Station,
 } from '../stations/stations';
 import './FloorPlan.css';
 
 type FloorPlanProps = {
-  /** Show where the 3D camera stands and looks (only meaningful when the 3D stage is visible). */
-  showView: boolean;
+  /** Where the 3D camera is heading; null when there is no 3D stage. */
+  cameraHeading: CameraHeading | null;
 };
 
 /**
  * Top-down plan of the stage: shows where the visitor is and where they can go.
  * It is also the conventional, keyboard-accessible navigation.
  */
-export function FloorPlan({ showView }: FloorPlanProps) {
+export function FloorPlan({ cameraHeading }: FloorPlanProps) {
   const { t } = useTranslation();
   const current = getStationForPath(useLocation().pathname);
 
@@ -47,7 +46,7 @@ export function FloorPlan({ showView }: FloorPlanProps) {
             y2={station.plan.y}
           />
         ))}
-        {showView && <ViewCone station={current} />}
+        {cameraHeading && <ViewCone heading={cameraHeading} />}
         {STATIONS.map((station) => (
           <g
             key={station.id}
@@ -86,14 +85,14 @@ export function FloorPlan({ showView }: FloorPlanProps) {
  * A wedge showing the camera's position and viewing direction, like the audience
  * position on a stage plot. Cameras outside the stage are drawn at its edge.
  */
-function ViewCone({ station }: { station: Station }) {
-  const view = CAMERA_VIEWS[station.id];
-  const toPlan = (dx: number, dz: number) => ({
-    x: station.plan.x + dx / PLAN_TO_WORLD,
-    y: station.plan.y + dz / PLAN_TO_WORLD,
+function ViewCone({ heading }: { heading: CameraHeading }) {
+  // World units on the floor → floor-plan units (the entry is the world origin).
+  const toPlan = ({ x, z }: { x: number; z: number }) => ({
+    x: ENTRY.plan.x + x / PLAN_TO_WORLD,
+    y: ENTRY.plan.y + z / PLAN_TO_WORLD,
   });
-  const camera = toPlan(view.position[0], view.position[2]);
-  const target = toPlan(view.lookAt[0], view.lookAt[2]);
+  const camera = toPlan(heading.camera);
+  const target = toPlan(heading.lookAt);
   const apex = {
     x: clamp(camera.x, PLAN_BOUNDS.x0, PLAN_BOUNDS.x1),
     y: clamp(camera.y, PLAN_BOUNDS.y0, PLAN_BOUNDS.y1),

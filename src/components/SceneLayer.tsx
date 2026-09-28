@@ -2,16 +2,21 @@ import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { useReducedMotion } from '../hooks/useMediaQuery';
 import { useTranslation } from '../i18n/useTranslation';
-import type { HoverInfo } from '../scene/interactive';
+import type { CameraHeading, HoverInfo } from '../scene/interactive';
 import type { StageScene } from '../scene/StageScene';
 import { getStationForPath } from '../stations/stations';
 import './SceneLayer.css';
+
+type SceneLayerProps = {
+  /** Reports where the camera is heading, so the floor plan can show it. */
+  onHeadingChange: (heading: CameraHeading) => void;
+};
 
 /**
  * The 3D stage behind the content. The URL decides where the camera is:
  * this component only forwards route changes to the scene.
  */
-export function SceneLayer() {
+export function SceneLayer({ onHeadingChange }: SceneLayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<StageScene | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -19,14 +24,22 @@ export function SceneLayer() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
-  const stationId = getStationForPath(useLocation().pathname).id;
+  const { pathname } = useLocation();
+  const stationId = getStationForPath(pathname).id;
+  const projectSlug = pathname.match(/^\/projects\/([^/]+)/)?.[1];
 
-  // Lets the loading effect read the latest station without re-running on every navigation.
-  const stationIdRef = useRef(stationId);
+  // Lets the loading effect read the latest view without re-running on every navigation.
+  const viewRef = useRef({ stationId, projectSlug });
   useEffect(() => {
-    stationIdRef.current = stationId;
-    sceneRef.current?.goTo(stationId);
-  }, [stationId]);
+    viewRef.current = { stationId, projectSlug };
+    sceneRef.current?.goTo(stationId, projectSlug);
+  }, [stationId, projectSlug]);
+
+  // Same trick for the callback, so a new function from the parent doesn't restart the scene.
+  const onHeadingChangeRef = useRef(onHeadingChange);
+  useEffect(() => {
+    onHeadingChangeRef.current = onHeadingChange;
+  }, [onHeadingChange]);
 
   useEffect(() => {
     let cancelled = false;
@@ -36,10 +49,12 @@ export function SceneLayer() {
       .then(({ createStageScene }) => {
         if (cancelled || !containerRef.current) return;
         sceneRef.current = createStageScene(containerRef.current, {
-          initialStation: stationIdRef.current,
+          initialStation: viewRef.current.stationId,
+          initialProject: viewRef.current.projectSlug,
           reducedMotion,
           onNavigate: (path) => navigate(path),
           onHover: setHover,
+          onHeadingChange: (heading) => onHeadingChangeRef.current(heading),
         });
         setIsReady(true);
       })
