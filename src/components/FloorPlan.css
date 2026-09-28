@@ -1,0 +1,108 @@
+.floor-plan {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.floor-plan__map {
+  width: 100%;
+  overflow: visible;
+}
+
+.floor-plan__boundary {
+  fill: none;
+  stroke: var(--color-line-strong);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.floor-plan__path {
+  stroke: var(--color-line-strong);
+  stroke-width: 1.5;
+  transition: stroke var(--duration-base) var(--ease-out);
+}
+
+.floor-plan__path--active {
+  stroke: var(--color-accent);
+}
+
+.floor-plan__mark rect {
+  fill: var(--color-bg);
+  stroke: var(--color-text-muted);
+  stroke-width: 1.5;
+  transition: fill var(--duration-base) var(--ease-out), stroke var(--duration-base) var(--ease-out);
+}
+
+.floor-plan__mark--current rect {
+  fill: var(--color-accent);
+  stroke: var(--color-accent);
+}
+
+.floor-plan__pulse {
+  fill: none;
+  stroke: var(--color-accent-dim);
+  stroke-width: 1;
+  transform-origin: center;
+  animation: floor-plan-pulse 2.4s var(--ease-out) infinite;
+}
+
+@keyframes floor-plan-pulse {
+  from {
+    opacity: 1;
+    transform: scale(0.6);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.4);
+  }
+}
+
+.floor-plan__list {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.floor-plan__link {
+  display: flex;
+  gap: var(--space-3);
+  align-items: baseline;
+  padding: var(--space-1) 0;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.floor-plan__link:hover,
+.floor-plan__link[aria-current] {
+  color: var(--color-text);
+}
+
+.floor-plan__cue {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--color-text-muted);
+}
+
+.floor-plan__link[aria-current] .floor-plan__cue {
+  color: var(--color-accent);
+}
+
+/* Mobile: the plan becomes a compact bottom bar with the same stations */
+@media (max-width: 47.99rem) {
+  .floor-plan__map {
+    display: none;
+  }
+
+  .floor-plan__list {
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+  }
+
+  .floor-plan__link {
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    padding: var(--space-2) 0;
+    font-size: var(--text-xs);
+  }
+}

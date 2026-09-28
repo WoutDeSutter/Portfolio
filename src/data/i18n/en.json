@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "role": "XR Student MCT"
+  },
+  "common": {
+    "skipToContent": "Skip to content",
+    "languageSwitch": "Nederlands",
+    "languageSwitchLabel": "Switch language to Dutch",
+    "placeholderNotice": "Placeholder content"
+  },
+  "stations": {
+    "entry": "Entry",
+    "work": "Work",
+    "lab": "Lab",
+    "about": "About",
+    "contact": "Contact"
+  },
+  "floorPlan": {
+    "label": "Stage floor plan",
+    "youAreHere": "You are here"
+  },
+  "entry": {
+    "intro": "Placeholder — a short personal introduction will be written here.",
+    "explore": "Explore the stage"
+  },
+  "work": {
+    "heading": "Work",
+    "featured": "Featured",
+    "more": "More projects"
+  },
+  "lab": {
+    "heading": "Lab",
+    "intro": "Experiments, prototypes and smaller technical explorations.",
+    "empty": "No experiments have been added yet."
+  },
+  "about": {
+    "heading": "About",
+    "intro": "Placeholder — education, interests and approach to XR will be written here.",
+    "skillsHeading": "Technology",
+    "usedIn": "Used in"
+  },
+  "contact": {
+    "heading": "Contact",
+    "intro": "Open to internships and collaborations in XR and interactive technology.",
+    "email": "Email",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "discord": "Discord",
+    "notConfigured": "Contact details will be added soon."
+  },
+  "cv": {
+    "download": "Download CV",
+    "unavailable": "CV coming soon"
+  },
+  "skills": {
+    "groups": {
+      "xr": "XR & 3D",
+      "software": "Software",
+      "physical": "Physical & stage"
+    }
+  },
+  "project": {
+    "back": "Back to work",
+    "backToLab": "Back to lab",
+    "notFound": "This project does not exist.",
+    "technologies": "Technology",
+    "links": "Links",
+    "status": {
+      "concept": "Concept",
+      "in-progress": "In progress",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "sections": {
+      "overview": "Overview",
+      "problem": "Problem",
+      "concept": "Concept",
+      "development": "Development",
+      "interaction": "Interaction",
+      "role": "My role",
+      "challenges": "Challenges",
+      "result": "Result"
+    },
+    "linkTypes": {
+      "github": "GitHub",
+      "demo": "Live demo",
+      "apk": "Download APK",
+      "external": "Project page",
+      "download": "Download"
+    }
+  },
+  "projects": {
+    "tagrun": {
+      "title": "TagRun",
+      "summary": "Placeholder — short description of TagRun."
+    },
+    "xr-posture-checker": {
+      "title": "XR Posture Checker",
+      "summary": "Placeholder — short description of XR Posture Checker."
+    },
+    "puzzle-roulette": {
+      "title": "Puzzle Roulette",
+      "summary": "Placeholder — short description of Puzzle Roulette."
+    },
+    "kitchenapp": {
+      "title": "KitchenApp",
+      "summary": "Placeholder — short description of KitchenApp."
+    },
+    "post-it-machine": {
+      "title": "Post-It Machine",
+      "summary": "Placeholder — short description of Post-It Machine."
+    }
+  }
+}

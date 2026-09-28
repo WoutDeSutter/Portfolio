@@ -1,0 +1,114 @@
+{
+  "meta": {
+    "role": "XR Student MCT"
+  },
+  "common": {
+    "skipToContent": "Ga naar inhoud",
+    "languageSwitch": "English",
+    "languageSwitchLabel": "Taal wijzigen naar Engels",
+    "placeholderNotice": "Tijdelijke inhoud"
+  },
+  "stations": {
+    "entry": "Ingang",
+    "work": "Werk",
+    "lab": "Lab",
+    "about": "Over",
+    "contact": "Contact"
+  },
+  "floorPlan": {
+    "label": "Plattegrond van de stage",
+    "youAreHere": "Je bent hier"
+  },
+  "entry": {
+    "intro": "Tijdelijk — hier komt een korte persoonlijke introductie.",
+    "explore": "Verken de stage"
+  },
+  "work": {
+    "heading": "Werk",
+    "featured": "Uitgelicht",
+    "more": "Meer projecten"
+  },
+  "lab": {
+    "heading": "Lab",
+    "intro": "Experimenten, prototypes en kleinere technische verkenningen.",
+    "empty": "Er zijn nog geen experimenten toegevoegd."
+  },
+  "about": {
+    "heading": "Over",
+    "intro": "Tijdelijk — hier komen opleiding, interesses en visie op XR.",
+    "skillsHeading": "Technologie",
+    "usedIn": "Gebruikt in"
+  },
+  "contact": {
+    "heading": "Contact",
+    "intro": "Open voor stages en samenwerkingen in XR en interactieve technologie.",
+    "email": "E-mail",
+    "linkedin": "LinkedIn",
+    "github": "GitHub",
+    "discord": "Discord",
+    "notConfigured": "Contactgegevens worden binnenkort toegevoegd."
+  },
+  "cv": {
+    "download": "Download cv",
+    "unavailable": "Cv volgt binnenkort"
+  },
+  "skills": {
+    "groups": {
+      "xr": "XR & 3D",
+      "software": "Software",
+      "physical": "Fysiek & podium"
+    }
+  },
+  "project": {
+    "back": "Terug naar werk",
+    "backToLab": "Terug naar lab",
+    "notFound": "Dit project bestaat niet.",
+    "technologies": "Technologie",
+    "links": "Links",
+    "status": {
+      "concept": "Concept",
+      "in-progress": "In ontwikkeling",
+      "completed": "Afgerond",
+      "archived": "Gearchiveerd"
+    },
+    "sections": {
+      "overview": "Overzicht",
+      "problem": "Probleem",
+      "concept": "Concept",
+      "development": "Ontwikkeling",
+      "interaction": "Interactie",
+      "role": "Mijn rol",
+      "challenges": "Uitdagingen",
+      "result": "Resultaat"
+    },
+    "linkTypes": {
+      "github": "GitHub",
+      "demo": "Live demo",
+      "apk": "Download APK",
+      "external": "Projectpagina",
+      "download": "Download"
+    }
+  },
+  "projects": {
+    "tagrun": {
+      "title": "TagRun",
+      "summary": "Tijdelijk — korte beschrijving van TagRun."
+    },
+    "xr-posture-checker": {
+      "title": "XR Posture Checker",
+      "summary": "Tijdelijk — korte beschrijving van XR Posture Checker."
+    },
+    "puzzle-roulette": {
+      "title": "Puzzle Roulette",
+      "summary": "Tijdelijk — korte beschrijving van Puzzle Roulette."
+    },
+    "kitchenapp": {
+      "title": "KitchenApp",
+      "summary": "Tijdelijk — korte beschrijving van KitchenApp."
+    },
+    "post-it-machine": {
+      "title": "Post-It Machine",
+      "summary": "Tijdelijk — korte beschrijving van Post-It Machine."
+    }
+  }
+}

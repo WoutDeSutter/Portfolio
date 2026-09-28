@@ -1,0 +1,52 @@
+[
+  {
+    "slug": "tagrun",
+    "kind": "featured",
+    "status": "completed",
+    "categories": [],
+    "technologies": [],
+    "media": [],
+    "links": [],
+    "demo": { "enabled": false }
+  },
+  {
+    "slug": "xr-posture-checker",
+    "kind": "featured",
+    "status": "completed",
+    "categories": [],
+    "technologies": [],
+    "media": [],
+    "links": [],
+    "demo": { "enabled": false }
+  },
+  {
+    "slug": "puzzle-roulette",
+    "kind": "project",
+    "status": "completed",
+    "categories": [],
+    "technologies": [],
+    "media": [],
+    "links": [],
+    "demo": { "enabled": false }
+  },
+  {
+    "slug": "kitchenapp",
+    "kind": "project",
+    "status": "completed",
+    "categories": [],
+    "technologies": [],
+    "media": [],
+    "links": [],
+    "demo": { "enabled": false }
+  },
+  {
+    "slug": "post-it-machine",
+    "kind": "project",
+    "status": "completed",
+    "categories": [],
+    "technologies": [],
+    "media": [],
+    "links": [],
+    "demo": { "enabled": false }
+  }
+]
