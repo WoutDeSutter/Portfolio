@@ -6,15 +6,19 @@ import { WorldLayer } from '../components/WorldLayer';
 import { useWebGLSupport } from '../hooks/useWebGLSupport';
 import { getPlaceForPath } from './places';
 import { NO_FRAME, PanelFrameContext, type PanelFrame } from './PanelFrameContext';
+import { TextVersionContext } from './TextVersionContext';
 import './Festival.css';
 
 /**
  * The whole site: the 3D festival filling the screen, the language toggle as the only
  * visible control, keyboard hotspots, and the panel of the open place (<Outlet />).
- * Without WebGL it renders the text version instead of the world.
+ * Without WebGL, or when the world fails to start, it renders the text version instead.
  */
 export function Festival() {
   const hasWebGL = useWebGLSupport();
+  const [worldFailed, setWorldFailed] = useState(false);
+  const textVersion = !hasWebGL || worldFailed;
+  const onWorldFail = useCallback(() => setWorldFailed(true), []);
   const { pathname } = useLocation();
   const [frame, setFrameState] = useState<PanelFrame>(NO_FRAME);
 
@@ -36,17 +40,19 @@ export function Festival() {
   }, [pathname]);
 
   return (
-    <PanelFrameContext.Provider value={setFrame}>
-      <div className={hasWebGL ? 'festival' : 'festival festival--flat'}>
-        {hasWebGL && <WorldLayer frame={frame} />}
-        <Hotspots />
-        <div className="festival__corner">
-          <LanguageSwitch />
+    <TextVersionContext.Provider value={textVersion}>
+      <PanelFrameContext.Provider value={setFrame}>
+        <div className={textVersion ? 'festival festival--flat' : 'festival'}>
+          {!textVersion && <WorldLayer frame={frame} onFail={onWorldFail} />}
+          <Hotspots />
+          <div className="festival__corner">
+            <LanguageSwitch />
+          </div>
+          <main className="festival__main">
+            <Outlet />
+          </main>
         </div>
-        <main className="festival__main">
-          <Outlet />
-        </main>
-      </div>
-    </PanelFrameContext.Provider>
+      </PanelFrameContext.Provider>
+    </TextVersionContext.Provider>
   );
 }

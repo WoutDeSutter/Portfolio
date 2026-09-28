@@ -29,12 +29,17 @@
 .festival--flat .hotspots ul {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2) var(--space-4);
-  padding: var(--space-4) 0;
+  gap: 0 var(--space-4);
+  /* Room on the right for the language toggle */
+  padding: 0 4rem var(--space-2) 0;
   border-bottom: var(--border);
 }
 
+/* Tall enough to tap comfortably on a phone */
 .festival--flat .hotspots__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
   text-decoration: none;
 }
 
