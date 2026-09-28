@@ -60,6 +60,8 @@ src/data/i18n/en.json    # all English text: same keys as nl.json
 - `src/components/` — shared UI (Shell, FloorPlan, SceneLayer, ProjectRow, ...)
 - `src/styles/tokens.css` — all theme values (the scene reads its colors from here too)
 - `src/scene/` — plain Three.js, loaded lazily by `SceneLayer` via dynamic import. `createStageScene()` returns `{ goTo, dispose }`; the URL decides the station, the scene never owns content. Shown only at ≥ 48rem with WebGL; reduced motion = camera cuts, no intro/parallax.
+- `src/scene/installations/` — objects per station, generated from `projects.json`: Work = projection screens (featured, in a corridor that grows backwards) + flight cases (project), Lab = workbench with one object per `lab` entry, About = FOH desk, Contact = stage door. Hovering shows a translated label (`SceneLayer`), clicking navigates.
+- 3D style is "previz": dark faces + thin light edges (`objects/previz.ts`); red only for wayfinding and hover. When changing an installation's size, re-check that its camera view in `cameraViews.ts` keeps it right of the text column.
 
 Concept: "The Stage" — a black-box XR/stage studio. Red floor paths = navigation, featured projects = projection installations, camera travels between fixed stations. The DOM layer must always work on its own; 3D is an enhancement.
 

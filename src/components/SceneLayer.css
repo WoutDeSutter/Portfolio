@@ -14,6 +14,21 @@
   display: block;
 }
 
+/* Hover label for objects in the stage, offset from the cursor */
+.scene-label {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 20;
+  margin: 1rem 0 0 1rem;
+  padding: var(--space-1) var(--space-2);
+  border-left: 2px solid var(--color-accent);
+  background: var(--color-bg);
+  color: var(--color-text);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 /* Keeps the text column readable where it overlaps the stage */
 .scene-layer::after {
   content: '';

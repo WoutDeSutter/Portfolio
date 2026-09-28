@@ -1,6 +1,5 @@
 import {
   AdditiveBlending,
-  CanvasTexture,
   ConeGeometry,
   DoubleSide,
   Group,
@@ -8,6 +7,7 @@ import {
   MeshBasicMaterial,
   PlaneGeometry,
 } from 'three';
+import { createRadialTexture, createVerticalFadeTexture } from '../textures';
 import type { SceneColors } from '../theme';
 
 const BEAM_HEIGHT = 14;
@@ -52,32 +52,4 @@ export function createFollowSpot(colors: SceneColors): Group {
   spot.add(beam);
 
   return spot;
-}
-
-function createRadialTexture(): CanvasTexture {
-  const size = 256;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const context = canvas.getContext('2d')!;
-  const gradient = context.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
-  gradient.addColorStop(0, 'rgba(255,255,255,1)');
-  gradient.addColorStop(0.55, 'rgba(255,255,255,0.35)');
-  gradient.addColorStop(1, 'rgba(255,255,255,0)');
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, size, size);
-  return new CanvasTexture(canvas);
-}
-
-/** Black at the top (invisible) to white at the floor: the beam fades out towards the rig. */
-function createVerticalFadeTexture(): CanvasTexture {
-  const canvas = document.createElement('canvas');
-  canvas.width = 4;
-  canvas.height = 128;
-  const context = canvas.getContext('2d')!;
-  const gradient = context.createLinearGradient(0, 0, 0, canvas.height);
-  gradient.addColorStop(0, '#000');
-  gradient.addColorStop(1, '#fff');
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  return new CanvasTexture(canvas);
 }
