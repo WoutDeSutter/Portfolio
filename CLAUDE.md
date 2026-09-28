@@ -139,6 +139,7 @@ Mobile may use a simplified version of the same world rather than copying deskto
 - Essential content cannot depend on hover, audio, or WebGL.
 - Use semantic HTML, accessible labels, and readable contrast.
 - Do not autoplay website music.
+- Conventions: every page's `h1` has `tabIndex={-1}` (Shell focuses it after navigation); decorative glyphs (→ ← ↗, cue numbers) are `aria-hidden`; links to other sites use `ExternalLink` (announces "opens in a new tab"); cards put the link on the title and stretch it with `::after`; a control's accessible name starts with its visible text.
 
 ## Content
 

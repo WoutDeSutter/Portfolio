@@ -69,9 +69,11 @@ export function FloorPlan({ cameraHeading }: FloorPlanProps) {
                 className="floor-plan__link"
                 aria-current={isCurrent ? 'location' : undefined}
               >
-                <span className="floor-plan__cue">{station.cue}</span>
+                {/* Cue numbers are visual only; aria-current already says "current location". */}
+                <span className="floor-plan__cue" aria-hidden="true">
+                  {station.cue}
+                </span>
                 <span>{t(`stations.${station.id}`)}</span>
-                {isCurrent && <span className="visually-hidden">({t('floorPlan.youAreHere')})</span>}
               </Link>
             </li>
           );

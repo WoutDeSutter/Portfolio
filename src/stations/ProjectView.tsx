@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router';
+import { ExternalLink } from '../components/ExternalLink';
 import { ProjectDemo } from '../components/ProjectDemo';
 import { ProjectFacts } from '../components/ProjectFacts';
 import { MediaFigure, ProjectGallery } from '../components/ProjectMedia';
@@ -27,9 +28,12 @@ export function ProjectView() {
   if (!project) {
     return (
       <div className="station">
-        <p className="station__empty">{t('project.notFound')}</p>
+        <h1 className="station__title" tabIndex={-1}>
+          {t('project.notFound')}
+        </h1>
         <Link to="/work" className="project__back label">
-          ← {t('project.back')}
+          <span aria-hidden="true">← </span>
+          {t('project.back')}
         </Link>
       </div>
     );
@@ -43,11 +47,14 @@ export function ProjectView() {
     // `key` resets the page (e.g. an open demo) when moving to another project.
     <article key={slug} className="station project">
       <Link to={isLab ? '/lab' : '/work'} className="project__back label">
-        ← {t(isLab ? 'project.backToLab' : 'project.back')}
+        <span aria-hidden="true">← </span>
+        {t(isLab ? 'project.backToLab' : 'project.back')}
       </Link>
 
       <header className="station__header">
-        <h1 className="station__title">{title}</h1>
+        <h1 className="station__title" tabIndex={-1}>
+          {title}
+        </h1>
         <p className="station__intro">{summary}</p>
         <ProjectFacts project={project} />
       </header>
@@ -66,9 +73,7 @@ export function ProjectView() {
           <ul className="project__links" role="list">
             {project.links.map((link) => (
               <li key={link.url}>
-                <a href={link.url} target="_blank" rel="noreferrer">
-                  {t(`project.linkTypes.${link.type}`)} ↗
-                </a>
+                <ExternalLink href={link.url}>{t(`project.linkTypes.${link.type}`)}</ExternalLink>
               </li>
             ))}
           </ul>

@@ -18,7 +18,9 @@ export function StationHeader({ id, intro }: StationHeaderProps) {
       <p className="label">
         <span className="station__cue">{findStation(id).cue}</span> / {name}
       </p>
-      <h1 className="station__title">{name}</h1>
+      <h1 className="station__title" tabIndex={-1}>
+        {name}
+      </h1>
       {intro && <p className="station__intro">{intro}</p>}
     </header>
   );

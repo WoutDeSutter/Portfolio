@@ -3,13 +3,22 @@
  * All user-facing text lives in src/data/i18n, keyed by project slug.
  */
 
+import type { Language } from '../i18n/dictionaries';
+
 export type ProjectKind = 'featured' | 'project' | 'lab';
 
 export type ProjectStatus = 'concept' | 'in-progress' | 'completed' | 'archived';
 
 export type MediaItem =
   | { type: 'image'; src: string; altKey: string }
-  | { type: 'video'; src: string; poster?: string; captionKey?: string }
+  | {
+      type: 'video';
+      src: string;
+      poster?: string;
+      captionKey?: string;
+      /** WebVTT subtitle files per language, e.g. { "en": "media/x/en.vtt" }. */
+      subtitles?: Partial<Record<Language, string>>;
+    }
   | { type: 'model'; src: string; altKey: string };
 
 export type LinkType = 'github' | 'demo' | 'apk' | 'external' | 'download';

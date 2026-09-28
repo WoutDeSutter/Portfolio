@@ -71,9 +71,14 @@
   padding: calc(var(--header-height) + var(--space-12)) var(--gutter) var(--space-16);
 }
 
-/* <main> receives focus after navigation (for screen readers); it is not a control, so no ring */
+/*
+ * Headings and <main> receive focus from code after navigation or "skip to content"
+ * (tabindex="-1"). They are not controls, so they get no focus ring.
+ */
 .shell__main:focus,
-.shell__main:focus-visible {
+.shell__main:focus-visible,
+.shell__main [tabindex='-1']:focus,
+.shell__main [tabindex='-1']:focus-visible {
   outline: none;
 }
 

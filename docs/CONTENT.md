@@ -77,6 +77,12 @@ Put files in `public/media/<slug>/` and reference them **without a leading slash
 - `altKey` / `captionKey` point to text in the language files, e.g. `"media": { "hero": "Player tagging an opponent in the XR arena" }` inside `projects.tagrun`.
 - The **first image** is also projected on the project's screen on the 3D stage (featured projects).
 - Images: prefer `.jpg`/`.webp`, around 1600 px wide and under ~300 kB. Videos: `.mp4` (H.264), with a `poster` image; they only load when played.
+- Write `alt` text that says what the image shows and why it matters ("Player tagging an opponent in the XR arena"), not "screenshot".
+- Videos with speech or important sound should have subtitles. Add WebVTT files per language; the one in the visitor's language is switched on by default:
+
+  ```json
+  { "type": "video", "src": "media/tagrun/gameplay.mp4", "subtitles": { "en": "media/tagrun/gameplay.en.vtt", "nl": "media/tagrun/gameplay.nl.vtt" } }
+  ```
 
 ## 4. Links
 

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ProjectDemo as Demo } from '../content/types';
 import { useTranslation } from '../i18n/useTranslation';
+import { ExternalLink } from './ExternalLink';
 
 type ProjectDemoProps = {
   demo: Demo;
@@ -18,9 +19,9 @@ export function ProjectDemo({ demo, title }: ProjectDemoProps) {
   if (!demo.enabled) return null;
 
   const externalLink = (
-    <a href={demo.url} target="_blank" rel="noreferrer" className="project-demo__link">
-      {t('project.demo.openExternal')} ↗
-    </a>
+    <ExternalLink href={demo.url} className="project-demo__link">
+      {t('project.demo.openExternal')}
+    </ExternalLink>
   );
 
   return (

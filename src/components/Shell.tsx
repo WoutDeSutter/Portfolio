@@ -23,14 +23,16 @@ export function Shell() {
   // "Lifted" state: the scene reports where its camera goes, the floor plan shows it.
   const [cameraHeading, setCameraHeading] = useState<CameraHeading | null>(null);
 
-  // After navigating, start at the top and move keyboard/screen-reader focus to the new content.
+  // After navigating, start at the top and move focus to the new page's heading, so screen
+  // readers announce the page ("Work, heading level 1") and Tab continues from there.
   useEffect(() => {
     if (isFirstRender.current) {
       isFirstRender.current = false;
       return;
     }
     window.scrollTo(0, 0);
-    mainRef.current?.focus({ preventScroll: true });
+    const heading = mainRef.current?.querySelector<HTMLElement>('h1[tabindex="-1"]');
+    (heading ?? mainRef.current)?.focus({ preventScroll: true });
   }, [pathname]);
 
   // A normal href="#main" would be read as a route by HashRouter, so focus the element directly.
@@ -49,7 +51,7 @@ export function Shell() {
 
       <header className="shell__header">
         <Link to="/" className="shell__identity">
-          <span className="shell__name">{site.name}</span>
+          <span className="shell__name">{site.name}</span>{' '}
           <span className="label">{t('meta.role')}</span>
         </Link>
         <div className="shell__actions">

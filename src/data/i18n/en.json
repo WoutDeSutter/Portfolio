@@ -5,8 +5,8 @@
   "common": {
     "skipToContent": "Skip to content",
     "languageSwitch": "Nederlands",
-    "languageSwitchLabel": "Switch language to Dutch",
-    "placeholderNotice": "Placeholder content"
+    "placeholderNotice": "Placeholder content",
+    "opensInNewTab": "(opens in a new tab)"
   },
   "stations": {
     "entry": "Entry",
@@ -16,8 +16,7 @@
     "contact": "Contact"
   },
   "floorPlan": {
-    "label": "Stage floor plan",
-    "youAreHere": "You are here"
+    "label": "Stage floor plan"
   },
   "entry": {
     "intro": "Placeholder — a short personal introduction will be written here.",

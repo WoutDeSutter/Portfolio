@@ -13,7 +13,10 @@ export function ProjectPager({ project }: { project: Project }) {
     <nav className="project-pager" aria-label={t('project.pager')}>
       {previous ? (
         <Link to={`/projects/${previous.slug}`} className="project-pager__link" rel="prev">
-          <span className="label">← {t('project.previous')}</span>
+          <span className="label">
+            <span aria-hidden="true">← </span>
+            {t('project.previous')}
+          </span>{' '}
           <span>{t(`projects.${previous.slug}.title`)}</span>
         </Link>
       ) : (
@@ -25,7 +28,10 @@ export function ProjectPager({ project }: { project: Project }) {
           className="project-pager__link project-pager__link--next"
           rel="next"
         >
-          <span className="label">{t('project.next')} →</span>
+          <span className="label">
+            {t('project.next')}
+            <span aria-hidden="true"> →</span>
+          </span>{' '}
           <span>{t(`projects.${next.slug}.title`)}</span>
         </Link>
       )}
