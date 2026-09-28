@@ -163,7 +163,7 @@ Required eventual areas:
 
 Contact channels: email, LinkedIn, GitHub, Discord, contact form.
 
-GitHub Pages has no backend: the contact form must use a configurable third-party form service (e.g. Formspree) and fall back to a `mailto:` link when it is not configured or fails.
+GitHub Pages has no backend: the contact form (`components/ContactForm.tsx`) posts to Formspree using `site.json → contactForm.formspreeId`. Without an id the form is not rendered (the channels remain); when sending fails it shows the email as a `mailto:` fallback. Validation messages are stored as keys so they follow a language switch; errors are linked with `aria-describedby`, status is announced via `role="status"`.
 
 ## GitHub Pages
 

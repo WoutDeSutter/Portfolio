@@ -1,3 +1,4 @@
+import { ContactForm } from '../components/ContactForm';
 import { ExternalLink } from '../components/ExternalLink';
 import { site } from '../content/content';
 import { useTranslation } from '../i18n/useTranslation';
@@ -12,6 +13,7 @@ type Channel = {
 export function ContactView() {
   const { t } = useTranslation();
   const { email, linkedin, github, discord } = site.contact;
+  const { formspreeId } = site.contactForm;
 
   const channels: Channel[] = [
     { id: 'email', value: email, href: `mailto:${email}` },
@@ -27,7 +29,10 @@ export function ContactView() {
       <StationHeader id="contact" intro={t('contact.intro')} />
 
       <section className="station__section">
-        {configured.length > 0 ? (
+        {configured.length === 0 && !formspreeId && (
+          <p className="station__empty">{t('contact.notConfigured')}</p>
+        )}
+        {configured.length > 0 && (
           <dl className="contact__channels">
             {configured.map((channel) => (
               <div key={channel.id} className="contact__channel">
@@ -44,10 +49,12 @@ export function ContactView() {
               </div>
             ))}
           </dl>
-        ) : (
-          <p className="station__empty">{t('contact.notConfigured')}</p>
         )}
       </section>
+
+      {/* The form only appears once a Formspree id is set in site.json; until then the
+          channels above (including email) are the way to get in touch. */}
+      {formspreeId && <ContactForm formspreeId={formspreeId} fallbackEmail={email} />}
     </div>
   );
 }
