@@ -5,8 +5,8 @@
   "common": {
     "skipToContent": "Ga naar inhoud",
     "languageSwitch": "English",
-    "languageSwitchLabel": "Taal wijzigen naar Engels",
-    "placeholderNotice": "Tijdelijke inhoud"
+    "placeholderNotice": "Tijdelijke inhoud",
+    "opensInNewTab": "(opent in een nieuw tabblad)"
   },
   "stations": {
     "entry": "Ingang",
@@ -16,8 +16,7 @@
     "contact": "Contact"
   },
   "floorPlan": {
-    "label": "Plattegrond van de stage",
-    "youAreHere": "Je bent hier"
+    "label": "Plattegrond van de stage"
   },
   "entry": {
     "intro": "Tijdelijk — hier komt een korte persoonlijke introductie.",

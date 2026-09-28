@@ -1,12 +1,30 @@
 .project-row {
-  border-top: var(--border);
-}
-
-.project-row__link {
+  position: relative;
   display: grid;
   gap: var(--space-4);
   padding: var(--space-6) 0;
+  border-top: var(--border);
+}
+
+/* Stretch the title link over the whole row */
+.project-row__link {
   text-decoration: none;
+}
+
+.project-row__link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+/* The focus ring goes around the whole row, not just the title */
+.project-row__link:focus-visible {
+  outline: none;
+}
+
+.project-row:has(.project-row__link:focus-visible) {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 4px;
 }
 
 .project-row__hero {
@@ -42,8 +60,8 @@
   transition: color var(--duration-fast) var(--ease-out), transform var(--duration-base) var(--ease-out);
 }
 
-.project-row__link:hover .project-row__arrow,
-.project-row__link:focus-visible .project-row__arrow {
+.project-row:hover .project-row__arrow,
+.project-row:has(.project-row__link:focus-visible) .project-row__arrow {
   color: var(--color-accent);
   transform: translateX(var(--space-1));
 }
@@ -53,14 +71,14 @@
   color: var(--color-text-muted);
 }
 
-.project-row--large .project-row__link {
+.project-row--large {
   padding: var(--space-8) 0;
 }
 
 /* Side by side only when the column itself is wide enough (not the screen): with the 3D
    stage the column is narrow, even on a wide screen. `.station` is the container. */
 @container (min-width: 50rem) {
-  .project-row--large .project-row__link:has(.project-row__hero) {
+  .project-row--large:has(.project-row__hero) {
     grid-template-columns: 3fr 2fr;
     gap: var(--space-8);
     align-items: end;

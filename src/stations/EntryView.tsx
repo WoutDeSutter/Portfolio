@@ -14,7 +14,9 @@ export function EntryView() {
         <p className="label">
           <span className="station__cue">{ENTRY.cue}</span> / {t('stations.entry')}
         </p>
-        <h1 className="entry__name">{site.name}</h1>
+        <h1 className="entry__name" tabIndex={-1}>
+          {site.name}
+        </h1>
         <p className="entry__role">{t('meta.role')}</p>
         <p className="station__intro">{t('entry.intro')}</p>
       </header>
@@ -27,7 +29,9 @@ export function EntryView() {
           {STATIONS.filter((station) => station !== ENTRY).map((station) => (
             <li key={station.id}>
               <Link to={station.path} className="entry__route">
-                <span className="label">{station.cue}</span>
+                <span className="label" aria-hidden="true">
+                  {station.cue}
+                </span>
                 <span className="entry__route-name">{t(`stations.${station.id}`)}</span>
                 <span className="entry__route-arrow" aria-hidden="true">
                   →

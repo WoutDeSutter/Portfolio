@@ -3,7 +3,7 @@ import { useTranslation } from '../i18n/useTranslation';
 
 /** One image or video with its optional caption. Loads lazily so long pages stay fast. */
 export function MediaFigure({ item, eager = false }: { item: MediaItem; eager?: boolean }) {
-  const { t, tOptional } = useTranslation();
+  const { t, tOptional, language } = useTranslation();
   // 3D models are presented by the Three.js layer, not in the page.
   if (item.type === 'model') return null;
 
@@ -12,7 +12,19 @@ export function MediaFigure({ item, eager = false }: { item: MediaItem; eager?: 
       {item.type === 'image' ? (
         <img src={item.src} alt={t(item.altKey)} loading={eager ? 'eager' : 'lazy'} decoding="async" />
       ) : (
-        <video src={item.src} poster={item.poster} controls preload="none" playsInline />
+        <video src={item.src} poster={item.poster} controls preload="none" playsInline>
+          {/* Subtitles: the track in the site's current language is on by default. */}
+          {Object.entries(item.subtitles ?? {}).map(([lang, src]) => (
+            <track
+              key={lang}
+              kind="subtitles"
+              src={src}
+              srcLang={lang}
+              label={lang === 'nl' ? 'Nederlands' : 'English'}
+              default={lang === language}
+            />
+          ))}
+        </video>
       )}
       {item.type === 'video' && item.captionKey && (
         <figcaption className="label">{tOptional(item.captionKey)}</figcaption>

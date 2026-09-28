@@ -1,3 +1,4 @@
+import { ExternalLink } from '../components/ExternalLink';
 import { site } from '../content/content';
 import { useTranslation } from '../i18n/useTranslation';
 import { StationHeader } from './StationHeader';
@@ -32,10 +33,10 @@ export function ContactView() {
               <div key={channel.id} className="contact__channel">
                 <dt className="label">{t(`contact.${channel.id}`)}</dt>
                 <dd>
-                  {channel.href ? (
-                    <a href={channel.href} target={channel.id === 'email' ? undefined : '_blank'} rel="noreferrer">
-                      {channel.value}
-                    </a>
+                  {channel.id === 'email' ? (
+                    <a href={channel.href}>{channel.value}</a>
+                  ) : channel.href ? (
+                    <ExternalLink href={channel.href}>{channel.value}</ExternalLink>
                   ) : (
                     channel.value
                   )}
