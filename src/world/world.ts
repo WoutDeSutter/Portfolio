@@ -1,4 +1,6 @@
 import {
+  AnimationMixer,
+  Box3,
   DirectionalLight,
   Fog,
   HemisphereLight,
@@ -16,6 +18,7 @@ import {
   WebGLRenderer,
 } from 'three';
 import { OPENABLE_PLACES, PLACES, findPlace, type Place, type PlaceId } from '../festival/places';
+import { Board, type BoardContent, type BoardRow } from './board';
 import {
   createBooth,
   createEntrance,
@@ -25,15 +28,17 @@ import {
   createStage,
   type PlaceObject,
 } from './greybox';
+import { loadItem } from './items';
 import { loadModels, type ModelName, type Models } from './models';
 import { BASE_FOV, CameraRig, type View } from './rig';
 import { readWorldColors } from './theme';
 
 export type HoverInfo = { labelKey: string; clientX: number; clientY: number };
 
-/** Text shown in the world: booth signs and the identity on the arch / LED wall. */
+/** Text shown in the world: booth signs, the boards inside the booths, and the identity on the arch / LED wall. */
 export type WorldLabels = {
   places: Record<PlaceId, string>;
+  boards: Partial<Record<PlaceId, BoardContent>>;
   name: string;
   role: string;
 };
@@ -49,6 +54,8 @@ export type WorldOptions = {
 
 export type FestivalWorld = {
   goTo: (id: PlaceId) => void;
+  /** Put a project's animated model on the counter of a booth (or clear it with null). */
+  showItem: (id: PlaceId, path: string | null) => void;
   /** Pixels covered by an open panel on the right / at the bottom. */
   setFrame: (right: number, bottom: number) => void;
   setLabels: (labels: WorldLabels) => void;
@@ -60,6 +67,18 @@ export type FestivalWorld = {
 /** The overview from behind the entrance, looking over the whole terrain towards the stage. */
 const OVERVIEW: View = { target: new Vector3(0, 1, -2), theta: 0, phi: 0.95, radius: 36 };
 const CLICK_TOLERANCE = 5; // pixels a pointer may move and still count as a click
+/** The board on the back wall of each booth (local position; matches board_frame() in build_festival.py). */
+const BOARD = { y: 1.85, z: -1.045, height: 1.25 };
+const BOARD_WIDTH: Partial<Record<PlaceId, number>> = { merch: 1.9 };
+/** Where a project's item stands on the counter (local; the tray / coaster in the Blender interiors). */
+const ITEM_SPOT: Partial<Record<PlaceId, Vector3>> = {
+  projects: new Vector3(1.15, 1.04, 1.02),
+  lab: new Vector3(1.0, 1.04, 1.02),
+};
+/** Items slowly turn on their tray, radians per second. */
+const TURNTABLE_SPEED = 0.35;
+/** Items are scaled to fit this space on the counter (taller would hide the board behind it). */
+const ITEM_FIT = { width: 0.6, height: 0.5 };
 const PINCH_SPEED = 3; // zoom per pixel the fingers move together/apart
 
 export function createFestivalWorld(container: HTMLElement, options: WorldOptions): FestivalWorld {
@@ -106,6 +125,16 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     objects.set(place.id, object);
   }
 
+  // Boards inside the booths (menu, tap list, …)
+  const boards = new Map<PlaceId, Board>();
+  for (const place of PLACES) {
+    if (place.kind !== 'booth') continue;
+    const board = new Board(BOARD_WIDTH[place.id] ?? 3.2, BOARD.height, colors);
+    board.mesh.position.set(0, BOARD.y, BOARD.z);
+    objects.get(place.id)!.group.add(board.mesh);
+    boards.set(place.id, board);
+  }
+
   function buildPlace(place: Place): PlaceObject {
     switch (place.kind) {
       case 'stage':
@@ -133,8 +162,10 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       if (!model) continue;
       object.group.remove(object.visual);
       disposeTree(object.visual);
-      // Booths share one model: clones share its geometry and materials.
+      // Booths share one model: clones share its geometry and materials. Each adds its own interior.
       object.visual = model.clone();
+      const interior = place.kind === 'booth' ? models[`booth_${place.id}` as ModelName] : undefined;
+      if (interior) object.visual.add(interior);
       object.group.add(object.visual);
     }
   }
@@ -154,12 +185,14 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       if (id === 'entrance' || id === 'about') object.sign?.setText(labels.name, labels.role);
       else object.sign?.setText(labels.places[id]);
     }
+    for (const [id, board] of boards) board.setContent(labels.boards[id] ?? { title: labels.places[id] });
     invalidate();
   }
   applyLabels(options.labels);
   // Signs use the web fonts; redraw once they are available.
   document.fonts?.ready.then(() => {
     for (const object of objects.values()) object.sign?.draw();
+    for (const board of boards.values()) board.draw();
     invalidate();
   });
 
@@ -171,7 +204,8 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     const target = object.focus.clone().applyAxisAngle(new Vector3(0, 1, 0), place.facing);
     target.add(new Vector3(place.x, 0, place.z));
     // FOH: low, behind the engineer and under the tent roof, looking over the desk towards the stage.
-    const phi = place.kind === 'foh' ? 1.32 : place.kind === 'stage' ? 1.3 : 1.25;
+    // Booths: almost at eye level, so the camera looks under the awning at the board inside.
+    const phi = place.kind === 'foh' ? 1.32 : place.kind === 'stage' ? 1.3 : 1.44;
     return { target, theta: place.facing, phi, radius: place.viewDistance };
   }
 
@@ -182,9 +216,63 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
   let currentPlace = options.initialPlace;
   rig.goTo(viewFor(currentPlace), true);
 
+  // Project items on the counters. They only animate while their booth is open (and never with
+  // reduced motion), so the world keeps rendering on demand the rest of the time.
+  type ShownItem = { path: string; root: Object3D | null; mixer: AnimationMixer | null };
+  const items = new Map<PlaceId, ShownItem>();
+  let lastTime = performance.now();
+
+  function showItem(id: PlaceId, path: string | null) {
+    const spot = ITEM_SPOT[id];
+    const current = items.get(id);
+    if (!spot || (current?.path ?? null) === path) return;
+    if (current?.root) {
+      current.mixer?.stopAllAction();
+      current.root.removeFromParent();
+    }
+    items.delete(id);
+    invalidate();
+    if (!path) return;
+    const shown: ShownItem = { path, root: null, mixer: null };
+    items.set(id, shown);
+    loadItem(path)
+      .then(({ scene: model, clips }) => {
+        if (disposed || items.get(id) !== shown) return;
+        const root = new Object3D();
+        root.position.copy(spot);
+        root.add(model);
+        // Fit any model on the tray, whatever size it was made at in Blender (its rest pose).
+        const bounds = new Box3().setFromObject(model);
+        const extent = bounds.getSize(new Vector3());
+        const fit = Math.min(ITEM_FIT.width / Math.max(extent.x, extent.z), ITEM_FIT.height / extent.y);
+        model.scale.setScalar(Number.isFinite(fit) ? fit : 1);
+        model.position.y = -bounds.min.y * model.scale.y;
+        objects.get(id)!.group.add(root);
+        shown.root = root;
+        if (!reducedMotion && clips.length) {
+          shown.mixer = new AnimationMixer(model);
+          for (const clip of clips) shown.mixer.clipAction(clip).play();
+        }
+        invalidate();
+      })
+      .catch((error: unknown) => console.warn(`[world] Could not load item "${path}":`, error));
+  }
+
+  function updateItems(seconds: number): boolean {
+    const shown = items.get(currentPlace);
+    if (reducedMotion || !shown?.root) return false;
+    shown.mixer?.update(seconds);
+    shown.root.rotation.y += seconds * TURNTABLE_SPEED;
+    return true;
+  }
+
   function frame() {
+    const now = performance.now();
+    const seconds = Math.min((now - lastTime) / 1000, 0.1);
+    lastTime = now;
     const moved = rig.update(camera, pointer, size.width, size.height);
-    if (!moved && !needsRender) return;
+    const animated = updateItems(seconds);
+    if (!moved && !needsRender && !animated) return;
     renderer.render(scene, camera);
     needsRender = false;
   }
@@ -224,6 +312,23 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     if (!hit) return null;
     const place = OPENABLE_PLACES.find((candidate) => objects.get(candidate.id)?.hitArea === hit.object);
     return place?.id ?? null;
+  }
+
+  /** The clickable board row under the pointer, on the board of the booth that is open. */
+  function boardRowAt(event: PointerEvent): { board: Board; row: BoardRow } | null {
+    const board = boards.get(currentPlace);
+    if (!board) return null;
+    const point = new Vector2();
+    toNormalized(event, point);
+    raycaster.setFromCamera(point, camera);
+    const hit = raycaster.intersectObject(board.mesh, false)[0];
+    const row = hit?.uv ? board.rowAt(hit.uv) : null;
+    return row ? { board, row } : null;
+  }
+
+  function setHoveredRow(target: { board: Board; row: BoardRow } | null) {
+    const board = boards.get(currentPlace);
+    if (board?.setHovered(target?.row ?? null)) invalidate();
   }
 
   function setHovered(id: PlaceId | null, event?: PointerEvent) {
@@ -274,6 +379,13 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       press.lastY = event.clientY;
       return;
     }
+    const row = boardRowAt(event);
+    setHoveredRow(row);
+    if (row) {
+      setHovered(null);
+      canvas.style.cursor = 'pointer';
+      return;
+    }
     const id = placeAt(event);
     setHovered(id && id !== currentPlace ? id : null, event);
   };
@@ -283,12 +395,20 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     press = null;
     canvas.style.cursor = '';
     if (!wasClick) return;
+    const row = boardRowAt(event);
+    if (row?.row.path) {
+      setHoveredRow(null);
+      onNavigate(row.row.path);
+      return;
+    }
     const id = placeAt(event);
     if (id && id !== currentPlace) onNavigate(findPlace(id).path);
     else if (!id && currentPlace !== 'entrance') onNavigate('/');
   };
   const onPointerLeave = () => {
-    if (!press) setHovered(null);
+    if (press) return;
+    setHovered(null);
+    setHoveredRow(null);
   };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
@@ -337,11 +457,13 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
 
   return {
     goTo(id) {
+      setHoveredRow(null);
       currentPlace = id;
       setHovered(null);
       if (reducedMotion) cutTo(viewFor(id));
       else rig.goTo(viewFor(id), false);
     },
+    showItem,
     setFrame(right, bottom) {
       rig.setFrame(right, bottom, reducedMotion);
     },
@@ -351,6 +473,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       disposed = true;
       fade?.cancel();
       renderer.setAnimationLoop(null);
+      for (const shown of items.values()) shown.mixer?.stopAllAction();
       resizeObserver.disconnect();
       rig.dispose();
       canvas.removeEventListener('pointerdown', onPointerDown);
@@ -360,6 +483,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('wheel', onWheel);
       for (const object of objects.values()) object.sign?.dispose();
+      for (const board of boards.values()) board.dispose();
       disposeTree(scene);
       renderer.dispose();
       canvas.remove();

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { site } from '../content/content';
+import { getProject, getProjectsByKind, site } from '../content/content';
+import type { Project } from '../content/types';
 import { OPENABLE_PLACES, getPlaceForPath, type PlaceId } from '../festival/places';
 import { useReducedMotion } from '../hooks/useMediaQuery';
 import { useTranslation } from '../i18n/useTranslation';
 import { whenIdle } from '../utils/whenIdle';
+import type { BoardRow } from '../world/board';
 import type { FestivalWorld, HoverInfo, WorldLabels } from '../world/world';
 import './WorldLayer.css';
 
@@ -19,6 +21,50 @@ type WorldLayerProps = {
  * The 3D festival, filling the screen behind everything. The URL decides where the camera
  * is: this component forwards route changes, labels and panel size to the world.
  */
+/**
+ * What the boards inside the booths show, from the same content as the panels: the Projects menu
+ * (clickable, opens the case study), the Lab tap list, the Merch price list, the info point and
+ * the profiles at Links.
+ */
+function useBoards(): WorldLabels['boards'] {
+  const { t } = useTranslation();
+  const toRow = (project: Project): BoardRow => ({
+    label: t(`projects.${project.slug}.title`),
+    detail: t(`project.status.${project.status}`),
+    path: `/projects/${project.slug}`,
+  });
+  const profiles = (['linkedin', 'github', 'discord'] as const).filter((id) => site.contact[id]);
+
+  return {
+    projects: {
+      title: t('booths.projects.board'),
+      rows: [...getProjectsByKind('featured'), ...getProjectsByKind('project')].map(toRow),
+    },
+    lab: { title: t('booths.lab.board'), rows: getProjectsByKind('lab').map(toRow), empty: t('booths.lab.empty') },
+    merch: { title: t('booths.merch.board'), rows: [{ label: t('booths.merch.cv'), detail: t('booths.merch.free') }] },
+    contact: { title: t('booths.contact.board'), icon: 'i' },
+    links: {
+      title: t('booths.links.board'),
+      rows: profiles.map((id) => ({ label: t(`contact.${id}`) })),
+      empty: t('booths.links.empty'),
+    },
+  };
+}
+
+/**
+ * The item on each counter: the open project's model, otherwise the first project of that
+ * booth that has one (the "dish of the day").
+ */
+function itemsFor(pathname: string): { projects: string | null; lab: string | null } {
+  const open = getProject(pathname.match(/^\/projects\/([^/]+)/)?.[1] ?? '');
+  const first = (list: Project[]) => list.find((project) => project.model)?.model ?? null;
+  const menu = [...getProjectsByKind('featured'), ...getProjectsByKind('project')];
+  return {
+    projects: open && open.kind !== 'lab' && open.model ? open.model : first(menu),
+    lab: open && open.kind === 'lab' && open.model ? open.model : first(getProjectsByKind('lab')),
+  };
+}
+
 export function WorldLayer({ frame, onFail }: WorldLayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<FestivalWorld | null>(null);
@@ -27,13 +73,16 @@ export function WorldLayer({ frame, onFail }: WorldLayerProps) {
   const { t, language } = useTranslation();
   const navigate = useNavigate();
   const reducedMotion = useReducedMotion();
-  const placeId = getPlaceForPath(useLocation().pathname).id;
+  const { pathname } = useLocation();
+  const placeId = getPlaceForPath(pathname).id;
+  const items = itemsFor(pathname);
 
   const labels: WorldLabels = {
     places: Object.fromEntries(OPENABLE_PLACES.map((place) => [place.id, t(`places.${place.id}`)])) as Record<
       PlaceId,
       string
     >,
+    boards: useBoards(),
     name: site.name,
     role: t('meta.role'),
   };
@@ -41,10 +90,15 @@ export function WorldLayer({ frame, onFail }: WorldLayerProps) {
   // Refs let the loading effect read the latest values without restarting the world.
   // `navigate` is among them: React Router gives it a new identity on every route change,
   // and as an effect dependency it would rebuild the whole world on each click.
-  const latest = useRef({ placeId, labels, frame, navigate, onFail });
+  const latest = useRef({ placeId, labels, frame, items, navigate, onFail });
   useEffect(() => {
-    latest.current = { placeId, labels, frame, navigate, onFail };
+    latest.current = { placeId, labels, frame, items, navigate, onFail };
   });
+
+  useEffect(() => {
+    worldRef.current?.showItem('projects', items.projects);
+    worldRef.current?.showItem('lab', items.lab);
+  }, [items.projects, items.lab]);
 
   useEffect(() => {
     worldRef.current?.goTo(placeId);
@@ -75,6 +129,8 @@ export function WorldLayer({ frame, onFail }: WorldLayerProps) {
             onHover: setHover,
           });
           world.setFrame(latest.current.frame.right, latest.current.frame.bottom);
+          world.showItem('projects', latest.current.items.projects);
+          world.showItem('lab', latest.current.items.lab);
           worldRef.current = world;
           return world.ready.then(() => {
             if (cancelled) return;

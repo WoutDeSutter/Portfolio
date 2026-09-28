@@ -7,7 +7,8 @@
     "technologies": [],
     "media": [],
     "links": [],
-    "demo": { "enabled": false }
+    "demo": { "enabled": false },
+    "model": "models/items/tagrun.glb"
   },
   {
     "slug": "xr-posture-checker",
@@ -17,7 +18,8 @@
     "technologies": [],
     "media": [],
     "links": [],
-    "demo": { "enabled": false }
+    "demo": { "enabled": false },
+    "model": "models/items/xr-posture-checker.glb"
   },
   {
     "slug": "puzzle-roulette",
@@ -27,7 +29,8 @@
     "technologies": [],
     "media": [],
     "links": [],
-    "demo": { "enabled": false }
+    "demo": { "enabled": false },
+    "model": "models/items/puzzle-roulette.glb"
   },
   {
     "slug": "kitchenapp",
@@ -37,7 +40,8 @@
     "technologies": [],
     "media": [],
     "links": [],
-    "demo": { "enabled": false }
+    "demo": { "enabled": false },
+    "model": "models/items/kitchenapp.glb"
   },
   {
     "slug": "post-it-machine",
@@ -47,6 +51,7 @@
     "technologies": [],
     "media": [],
     "links": [],
-    "demo": { "enabled": false }
+    "demo": { "enabled": false },
+    "model": "models/items/post-it-machine.glb"
   }
 ]

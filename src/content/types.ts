@@ -43,6 +43,12 @@ export type Project = {
   media: MediaItem[];
   links: ProjectLink[];
   demo: ProjectDemo;
+  /**
+   * Small animated 3D model shown on the booth counter (Projects or Lab), e.g.
+   * "models/items/tagrun.glb" — exported from festival.blend (collection item_<slug>).
+   * Leave it out for no model.
+   */
+  model?: string;
 };
 
 /**

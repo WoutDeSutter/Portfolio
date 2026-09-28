@@ -139,12 +139,24 @@ Also fill in `contact.email`: when sending fails, the form shows it as a fallbac
 
 ## 8. 3D models (Blender)
 
-The booth (a pop-up container), stage, FOH tent and entrance come from `blender/festival.blend`. Each model is a collection with that name (`booth`, `stage`, `foh`, `entrance`); all four sit at the origin, so hide the ones you are not working on (eye icon in the Outliner).
+The booth (a pop-up container), stage, FOH tent and entrance come from `blender/festival.blend`. Each model is a collection with that name (`booth`, `stage`, `foh`, `entrance`), and every booth adds its own interior (`booth_projects`, `booth_lab`, `booth_merch`, `booth_contact`, `booth_links`). They all sit at the origin, so hide the ones you are not working on (eye icon in the Outliner).
+
+The boards inside the booths fill themselves: the Projects menu lists your projects (click a line to open it), the Lab tap list your LAB entries, Links your profiles from `site.json`. Keep the black board frame on the back wall where it is; the site draws the board on it.
 
 1. Open `blender/festival.blend` and edit a model. Keep its front facing **−Y** (Blender's front view, numpad 1, looks at it) and keep the sizes roughly the same: signs, click areas and the camera are placed in code and expect the model where it is now.
 2. Don't model the text on signs; the site draws it (in the right language) on top of the black sign frames.
 3. Export: open `blender/export_models.py` in the **Scripting** workspace and press **Run Script**. It writes `public/models/<collection>.glb`.
 4. Check the result with `npm run dev`.
+
+### Project items (small animated models)
+
+Every project can have a small animated model that stands on the counter of its booth — the "dish" of the Projects menu, or what's on tap at the Lab. The counter shows the open project's model, or else the first project of that booth that has one.
+
+1. In `festival.blend`, each item is a collection `item_<slug>` (e.g. `item_tagrun`). The current ones are placeholders based only on the project names; replace them with whatever fits the project.
+2. Animate with keyframes on the objects (location, rotation, scale) between frame 1 and 49, and make the last keyframe equal to the first so the loop is seamless. Parent parts to each other for chains (see `item_xr-posture-checker`).
+3. Any size works: the site scales the model to fit the tray (about 0.6 m wide, 0.5 m tall). It also turns slowly on the tray, and it stands still for visitors who prefer reduced motion.
+4. Run `export_models.py`; items are written to `public/models/items/<slug>.glb`.
+5. Link it in `projects.json`: `"model": "models/items/<slug>.glb"`. Remove the field to show no model.
 
 Tips: keep it low-poly (the whole terrain is currently around 700 kB), reuse the existing materials (`wood`, `metal`, `fabric`, `accent`, `bulb`, …), and remember that light-emitting materials (`bulb`, `lens`, `screen`) glow at night.
 
