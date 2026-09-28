@@ -1,5 +1,5 @@
 import { Group } from 'three';
-import { createBox, type PrevizMaterials } from '../objects/previz';
+import { createBox, mergeStatic, type PrevizMaterials } from '../objects/previz';
 import type { Installation } from './types';
 
 const DESK = { width: 2.6, height: 0.8, depth: 1.2, z: -1.2 };
@@ -36,5 +36,6 @@ export function createAboutInstallation(materials: PrevizMaterials): Installatio
   monitor.position.set(DESK.width / 2 - 0.6, DESK.height + 0.15, DESK.z - DESK.depth / 2 + 0.1);
   group.add(monitor);
 
+  mergeStatic(group, materials);
   return { group, interactives: [] };
 }

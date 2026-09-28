@@ -5,6 +5,9 @@ import type { Interactive } from '../interactive';
 export type Installation = {
   group: Group;
   interactives: Interactive[];
-  /** Called the first time the camera arrives, to load heavier assets only when needed. */
-  activate?: () => void;
+  /**
+   * Called the first time the camera arrives, to load heavier assets only when needed.
+   * Call `onChange` when something visible changed later (e.g. a texture finished loading).
+   */
+  activate?: (onChange: () => void) => void;
 };
