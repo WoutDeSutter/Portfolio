@@ -48,6 +48,8 @@ export type StageSceneOptions = {
 export type StageScene = {
   /** Travel to a station; with a project slug, focus on that project's object there. */
   goTo: (id: StationId, projectSlug?: string) => void;
+  /** Resolves once shaders are compiled and the first frame is drawn. */
+  ready: Promise<void>;
   dispose: () => void;
 };
 
@@ -169,16 +171,28 @@ export function createStageScene(
   const pointer = new Vector2();
   const parallax = new Vector2();
   const gsapContext = gsap.context(() => {});
+  let intro: gsap.core.Timeline | null = null;
+  let disposed = false;
+
+  /**
+   * The scene only renders when something changed (see the render loop). Anything that
+   * changes the picture without moving the camera calls invalidate().
+   */
+  let needsRender = true;
+  const invalidate = () => {
+    needsRender = true;
+  };
 
   /** Load an installation's heavier assets the first time the visitor arrives there. */
   function activate(id: StationId) {
     if (activated.has(id)) return;
     activated.add(id);
-    installations[id]?.activate?.();
+    installations[id]?.activate?.(invalidate);
   }
 
   function refreshHighlight(item: Interactive | null) {
     item?.setHighlighted?.(item === hovered || item === selected);
+    invalidate();
   }
 
   /**
@@ -229,29 +243,52 @@ export function createStageScene(
     return OPACITY.idle;
   }
 
-  function updateHighlights(smoothing: number) {
+  /** Eases opacities towards their targets; returns whether anything is still changing. */
+  function updateHighlights(smoothing: number): boolean {
+    let changing = false;
+    const ease = (material: MeshBasicMaterial, target: number) => {
+      const difference = target - material.opacity;
+      if (Math.abs(difference) < 0.001) {
+        material.opacity = target;
+        return;
+      }
+      material.opacity += difference * smoothing;
+      changing = true;
+    };
     for (const station of stations) {
       const target = targetOpacity(station.id);
-      station.markMaterial.opacity += (target - station.markMaterial.opacity) * smoothing;
-      if (station.pathMaterial) {
-        station.pathMaterial.opacity += (target - station.pathMaterial.opacity) * smoothing;
-      }
+      ease(station.markMaterial, target);
+      if (station.pathMaterial) ease(station.pathMaterial, target);
     }
+    return changing;
   }
   updateHighlights(1);
 
-  // Render loop
-  renderer.setAnimationLoop(() => {
-    if (!reducedMotion) parallax.lerp(pointer, PARALLAX.smoothing);
+  // Render loop. Rendering is the expensive part, so a frame is only drawn when the picture
+  // changes: camera travel, intro, parallax, highlight fades, hover, resize, loaded textures.
+  // When the stage stands still the GPU does nothing.
+  const renderedCamera = new Vector3(Number.NaN, 0, 0);
+  const renderedLookAt = new Vector3();
+  function frame() {
+    const parallaxMoving = !reducedMotion && parallax.distanceToSquared(pointer) > 1e-7;
+    if (parallaxMoving) parallax.lerp(pointer, PARALLAX.smoothing);
+    const highlightsChanging = updateHighlights(reducedMotion ? 1 : OPACITY.smoothing);
+
     camera.position.set(
       cameraBase.x + parallax.x * PARALLAX.x,
       cameraBase.y + parallax.y * PARALLAX.y,
       cameraBase.z,
     );
+    const cameraMoved = !camera.position.equals(renderedCamera) || !lookTarget.equals(renderedLookAt);
+    const introPlaying = intro?.isActive() ?? false;
+    if (!needsRender && !cameraMoved && !highlightsChanging && !introPlaying) return;
+
     camera.lookAt(lookTarget);
-    updateHighlights(reducedMotion ? 1 : OPACITY.smoothing);
     renderer.render(scene, camera);
-  });
+    renderedCamera.copy(camera.position);
+    renderedLookAt.copy(lookTarget);
+    needsRender = false;
+  }
 
   // Resize with the container and frame the camera on the free area right of the text.
   const resizeObserver = new ResizeObserver(() => {
@@ -261,6 +298,7 @@ export function createStageScene(
     const containerLeft = container.getBoundingClientRect().left;
     const free = freeArea.getBoundingClientRect();
     frameCamera(camera, { width, height }, { left: free.left - containerLeft, width: free.width });
+    invalidate();
   });
   resizeObserver.observe(container);
   resizeObserver.observe(freeArea);
@@ -328,11 +366,12 @@ export function createStageScene(
   canvas.addEventListener('click', onCanvasClick);
 
   // Intro: the stage "resolves" like a headset reading the room — grid first, then the tape rolls out.
-  if (!reducedMotion) {
+  function playIntro() {
+    if (reducedMotion) return;
     gsapContext.add(() => {
       const gridMaterial = floor.grid.material as LineBasicMaterial;
       const boundaryMaterial = floor.boundary.material as LineDashedMaterial;
-      const intro = gsap.timeline({ defaults: { ease: 'power2.out' } });
+      intro = gsap.timeline({ defaults: { ease: 'power2.out' } });
       intro.from(gridMaterial, { opacity: 0, duration: 1.2 }, 0);
       intro.from(boundaryMaterial, { opacity: 0, duration: 1.2 }, 0.2);
       intro.from(
@@ -353,7 +392,22 @@ export function createStageScene(
     });
   }
 
+  // Compile all shaders up front (in parallel where the browser supports it) instead of during
+  // the first frame, then start rendering and the intro. The layer fades in once this resolves.
+  const ready = renderer
+    .compileAsync(scene, camera)
+    .catch(() => {
+      // Compiling ahead is an optimisation; if it fails, the first render compiles instead.
+    })
+    .then(() => {
+      if (disposed) return;
+      playIntro();
+      frame();
+      renderer.setAnimationLoop(frame);
+    });
+
   function dispose() {
+    disposed = true;
     renderer.setAnimationLoop(null);
     resizeObserver.disconnect();
     gsapContext.revert();
@@ -373,7 +427,7 @@ export function createStageScene(
     canvas.remove();
   }
 
-  return { goTo, dispose };
+  return { goTo, ready, dispose };
 }
 
 function disposeMaterial(material: Material | undefined) {

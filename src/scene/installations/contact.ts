@@ -1,5 +1,5 @@
 import { AdditiveBlending, Group, Mesh, MeshBasicMaterial, PlaneGeometry } from 'three';
-import { createBox, type PrevizMaterials } from '../objects/previz';
+import { createBox, mergeStatic, type PrevizMaterials } from '../objects/previz';
 import { createRadialTexture, createVerticalFadeTexture } from '../textures';
 import type { SceneColors } from '../theme';
 import type { Installation } from './types';
@@ -18,6 +18,7 @@ export function createContactInstallation(colors: SceneColors, materials: Previz
   const lintel = createBox(DOOR.width + DOOR.post * 2, DOOR.post, DOOR.post, materials);
   lintel.position.set(0, DOOR.height, DOOR.z);
   group.add(lintel);
+  mergeStatic(group, materials);
 
   const lightMaterial = { color: colors.text, transparent: true, blending: AdditiveBlending, depthWrite: false };
 

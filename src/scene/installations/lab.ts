@@ -1,7 +1,7 @@
 import { Group, LineBasicMaterial, Vector3 } from 'three';
 import { getProjectsByKind } from '../../content/content';
 import type { Interactive } from '../interactive';
-import { createBox, type PrevizMaterials } from '../objects/previz';
+import { createBox, mergeStatic, type PrevizMaterials } from '../objects/previz';
 import type { SceneColors } from '../theme';
 import type { Installation } from './types';
 
@@ -31,6 +31,8 @@ export function createLabInstallation(colors: SceneColors, materials: PrevizMate
   const pegboard = createBox(BENCH.width, PEGBOARD.height, 0.04, materials);
   pegboard.position.set(0, BENCH.height, PEGBOARD.z);
   group.add(pegboard);
+  // Merge the bench now, before the (interactive) LAB objects are added.
+  mergeStatic(group, materials);
 
   const experiments = getProjectsByKind('lab');
   experiments.forEach((project, index) => {

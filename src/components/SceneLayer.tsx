@@ -5,6 +5,7 @@ import { useTranslation } from '../i18n/useTranslation';
 import type { CameraHeading, HoverInfo } from '../scene/interactive';
 import type { StageScene } from '../scene/StageScene';
 import { getStationForPath } from '../stations/stations';
+import { whenIdle } from '../utils/whenIdle';
 import './SceneLayer.css';
 
 type SceneLayerProps = {
@@ -45,27 +46,40 @@ export function SceneLayer({ onHeadingChange }: SceneLayerProps) {
   useEffect(() => {
     let cancelled = false;
 
-    // Dynamic import: Three.js is downloaded as a separate file, only when the 3D stage is used.
-    import('../scene/StageScene')
-      .then(({ createStageScene }) => {
-        if (cancelled || !containerRef.current || !freeAreaRef.current) return;
-        sceneRef.current = createStageScene(containerRef.current, freeAreaRef.current, {
-          initialStation: viewRef.current.stationId,
-          initialProject: viewRef.current.projectSlug,
-          reducedMotion,
-          onNavigate: (path) => navigate(path),
-          onHover: setHover,
-          onHeadingChange: (heading) => onHeadingChangeRef.current(heading),
+    const start = () => {
+      performance.mark('stage:start');
+      // Dynamic import: Three.js is downloaded as a separate file, only when the 3D stage is used.
+      import('../scene/StageScene')
+        .then(({ createStageScene }) => {
+          if (cancelled || !containerRef.current || !freeAreaRef.current) return;
+          const scene = createStageScene(containerRef.current, freeAreaRef.current, {
+            initialStation: viewRef.current.stationId,
+            initialProject: viewRef.current.projectSlug,
+            reducedMotion,
+            onNavigate: (path) => navigate(path),
+            onHover: setHover,
+            onHeadingChange: (heading) => onHeadingChangeRef.current(heading),
+          });
+          sceneRef.current = scene;
+          return scene.ready.then(() => {
+            if (cancelled) return;
+            // Visible in DevTools → Performance → Timings as "stage:ready".
+            performance.measure('stage:ready', 'stage:start');
+            setIsReady(true);
+          });
+        })
+        .catch((error: unknown) => {
+          // The DOM layer works on its own, so a failing 3D stage only costs the enhancement.
+          console.error('[scene] Could not start the 3D stage:', error);
         });
-        setIsReady(true);
-      })
-      .catch((error: unknown) => {
-        // The DOM layer works on its own, so a failing 3D stage only costs the enhancement.
-        console.error('[scene] Could not start the 3D stage:', error);
-      });
+    };
+
+    // Let the page, fonts and first paint go first; start the 3D when the browser is idle.
+    const idle = whenIdle(start);
 
     return () => {
       cancelled = true;
+      idle.cancel();
       sceneRef.current?.dispose();
       sceneRef.current = null;
       setIsReady(false);

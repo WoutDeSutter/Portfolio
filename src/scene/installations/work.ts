@@ -15,7 +15,7 @@ import {
 import { getProjectsByKind } from '../../content/content';
 import type { Project } from '../../content/types';
 import type { Interactive } from '../interactive';
-import { createBox, type PrevizMaterials } from '../objects/previz';
+import { createBox, mergeStatic, type PrevizMaterials } from '../objects/previz';
 import { createTestPatternTexture } from '../textures';
 import type { SceneColors } from '../theme';
 import type { Installation } from './types';
@@ -103,7 +103,7 @@ export function createWorkInstallation(colors: SceneColors, materials: PrevizMat
   });
 
   // Hero images load only when the visitor first arrives at Work.
-  const activate = () => {
+  const activate = (onChange: () => void) => {
     const loader = new TextureLoader();
     for (const { project, surface } of screens) {
       const hero = project.media.find((item) => item.type === 'image');
@@ -113,6 +113,7 @@ export function createWorkInstallation(colors: SceneColors, materials: PrevizMat
         surface.map?.dispose();
         surface.map = texture;
         surface.needsUpdate = true;
+        onChange();
       });
     }
   };
@@ -178,6 +179,8 @@ function createProjection(project: Project, colors: SceneColors, materials: Prev
     },
   };
 
+  // The screen (hit area), highlightable edges and beam have their own materials, so they stay separate.
+  mergeStatic(object, materials);
   return { object, interactive, surface };
 }
 
