@@ -1,0 +1,95 @@
+.contact-form {
+  display: grid;
+  gap: var(--space-6);
+  max-width: var(--reading-max);
+  padding-top: var(--space-8);
+  border-top: var(--border);
+}
+
+.form-field {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.form-field textarea {
+  resize: vertical;
+  min-height: 8rem;
+}
+
+.form-field input:hover,
+.form-field textarea:hover {
+  border-color: var(--color-text-muted);
+}
+
+.form-field input:focus-visible,
+.form-field textarea:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 1px;
+  border-color: var(--color-accent);
+}
+
+.form-field [aria-invalid='true'] {
+  border-color: var(--color-accent);
+}
+
+/* Error text: red plus a marker, so it doesn't rely on colour alone */
+.form-field__error {
+  color: var(--color-accent);
+  font-size: var(--text-sm);
+}
+
+.form-field__error::before {
+  content: '! ';
+  font-family: var(--font-mono);
+}
+
+.contact-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.contact-form__actions button {
+  flex: none;
+}
+
+.contact-form__status {
+  flex: 1 1 16rem;
+}
+
+.contact-form button:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.contact-form__status--error a {
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.25em;
+}
+
+.contact-form__privacy {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+/* The spam trap must not be visible or reachable for people */
+.contact-form__trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}

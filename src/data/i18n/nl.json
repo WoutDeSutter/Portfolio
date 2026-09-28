@@ -45,7 +45,22 @@
     "linkedin": "LinkedIn",
     "github": "GitHub",
     "discord": "Discord",
-    "notConfigured": "Contactgegevens worden binnenkort toegevoegd."
+    "notConfigured": "Contactgegevens worden binnenkort toegevoegd.",
+    "form": {
+      "heading": "Stuur een bericht",
+      "name": "Naam",
+      "email": "E-mail",
+      "message": "Bericht",
+      "submit": "Bericht versturen",
+      "sending": "Versturen…",
+      "success": "Bedankt — je bericht is verstuurd.",
+      "error": "Je bericht kon niet worden verstuurd. Probeer het opnieuw of mail me rechtstreeks:",
+      "privacy": "Je bericht wordt afgeleverd via Formspree, een formulierdienst, en wordt alleen gebruikt om je te antwoorden.",
+      "errors": {
+        "required": "Vul dit veld in.",
+        "email": "Vul een geldig e-mailadres in, bijvoorbeeld naam@voorbeeld.be."
+      }
+    }
   },
   "cv": {
     "download": "Download cv",

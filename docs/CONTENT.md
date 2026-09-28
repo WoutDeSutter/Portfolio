@@ -121,6 +121,22 @@ Types: `github`, `demo`, `apk`, `external`, `download`. Labels are translated au
 
 Empty values are hidden on the site. Put the CV in `public/cv/`.
 
+## 7. Contact form (Formspree)
+
+GitHub Pages has no server, so the contact form sends messages through [Formspree](https://formspree.io), which has a free plan (check their site for the current limits). **The form only appears once a form id is set**; until then visitors see your email and other channels.
+
+1. Create a Formspree account and a new form. Messages are delivered to the email address of your account.
+2. Copy the form id — the part after `/f/` in the endpoint, e.g. `https://formspree.io/f/xyzabcde` → `xyzabcde`.
+3. Put it in `site.json`:
+
+   ```json
+   "contactForm": { "formspreeId": "xyzabcde" }
+   ```
+
+4. After deploying, send yourself a test message from the live site and check it arrives. Formspree may ask you to confirm the first submission by email.
+
+Also fill in `contact.email`: when sending fails, the form shows it as a fallback. The form has a hidden `_gotcha` field that Formspree uses to drop spam from bots.
+
 ## Check your changes
 
 ```bash

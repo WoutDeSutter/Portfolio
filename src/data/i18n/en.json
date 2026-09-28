@@ -45,7 +45,22 @@
     "linkedin": "LinkedIn",
     "github": "GitHub",
     "discord": "Discord",
-    "notConfigured": "Contact details will be added soon."
+    "notConfigured": "Contact details will be added soon.",
+    "form": {
+      "heading": "Send a message",
+      "name": "Name",
+      "email": "Email",
+      "message": "Message",
+      "submit": "Send message",
+      "sending": "Sending…",
+      "success": "Thank you — your message has been sent.",
+      "error": "Your message could not be sent. Please try again, or email me directly:",
+      "privacy": "Your message is delivered by Formspree, a form service, and is only used to reply to you.",
+      "errors": {
+        "required": "Please fill in this field.",
+        "email": "Please enter a valid email address, e.g. name@example.com."
+      }
+    }
   },
   "cv": {
     "download": "Download CV",
