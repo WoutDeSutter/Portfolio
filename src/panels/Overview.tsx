@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { site } from '../content/content';
+import { useTextVersion } from '../festival/TextVersionContext';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useMediaQuery } from '../hooks/useMediaQuery';
-import { useWebGLSupport } from '../hooks/useWebGLSupport';
 import { useTranslation } from '../i18n/useTranslation';
 import './Overview.css';
 
@@ -14,7 +14,7 @@ const HINT_DURATION = 9000;
  */
 export function Overview() {
   const { t } = useTranslation();
-  const hasWebGL = useWebGLSupport();
+  const textVersion = useTextVersion();
   const isTouch = useMediaQuery('(pointer: coarse)');
   const [showHint, setShowHint] = useState(true);
   useDocumentTitle(t('meta.role'));
@@ -30,7 +30,7 @@ export function Overview() {
     };
   }, []);
 
-  if (!hasWebGL) {
+  if (textVersion) {
     return (
       <section className="panel" aria-labelledby="overview-title">
         <h1 id="overview-title" className="panel__title">

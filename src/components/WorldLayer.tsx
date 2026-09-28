@@ -11,13 +11,15 @@ import './WorldLayer.css';
 type WorldLayerProps = {
   /** Pixels covered by the open panel, so the world can keep the place beside it. */
   frame: { right: number; bottom: number };
+  /** The world could not start (e.g. the GPU refused a WebGL context); show the text version. */
+  onFail: () => void;
 };
 
 /**
  * The 3D festival, filling the screen behind everything. The URL decides where the camera
  * is: this component forwards route changes, labels and panel size to the world.
  */
-export function WorldLayer({ frame }: WorldLayerProps) {
+export function WorldLayer({ frame, onFail }: WorldLayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<FestivalWorld | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -37,9 +39,11 @@ export function WorldLayer({ frame }: WorldLayerProps) {
   };
 
   // Refs let the loading effect read the latest values without restarting the world.
-  const latest = useRef({ placeId, labels, frame });
+  // `navigate` is among them: React Router gives it a new identity on every route change,
+  // and as an effect dependency it would rebuild the whole world on each click.
+  const latest = useRef({ placeId, labels, frame, navigate, onFail });
   useEffect(() => {
-    latest.current = { placeId, labels, frame };
+    latest.current = { placeId, labels, frame, navigate, onFail };
   });
 
   useEffect(() => {
@@ -67,7 +71,7 @@ export function WorldLayer({ frame }: WorldLayerProps) {
             initialPlace: latest.current.placeId,
             labels: latest.current.labels,
             reducedMotion,
-            onNavigate: (path) => navigate(path),
+            onNavigate: (path) => latest.current.navigate(path),
             onHover: setHover,
           });
           world.setFrame(latest.current.frame.right, latest.current.frame.bottom);
@@ -80,6 +84,7 @@ export function WorldLayer({ frame }: WorldLayerProps) {
         })
         .catch((error: unknown) => {
           console.error('[world] Could not start the 3D festival:', error);
+          if (!cancelled) latest.current.onFail();
         });
     };
     const idle = whenIdle(start);
@@ -92,7 +97,7 @@ export function WorldLayer({ frame }: WorldLayerProps) {
       setIsReady(false);
       setHover(null);
     };
-  }, [reducedMotion, navigate]);
+  }, [reducedMotion]);
 
   return (
     <>

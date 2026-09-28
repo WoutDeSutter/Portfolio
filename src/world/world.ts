@@ -268,11 +268,30 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       renderer.setAnimationLoop(frame);
     });
 
+  // With reduced motion the camera does not fly; a short fade through the night softens the cut.
+  // (Web Animations are not affected by the global reduced-motion CSS; a fade is not motion.)
+  let fade: Animation | null = null;
+  function cutTo(view: View) {
+    fade?.cancel();
+    fade = canvas.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180, easing: 'ease-in', fill: 'forwards' });
+    const fadeOut = fade;
+    fadeOut.finished
+      .then(() => {
+        rig.goTo(view, true);
+        fade = canvas.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320, easing: 'ease-out' });
+        fadeOut.cancel();
+      })
+      .catch(() => {
+        // Cancelled by a newer goTo, which takes over.
+      });
+  }
+
   return {
     goTo(id) {
       currentPlace = id;
       setHovered(null);
-      rig.goTo(viewFor(id), reducedMotion);
+      if (reducedMotion) cutTo(viewFor(id));
+      else rig.goTo(viewFor(id), false);
     },
     setFrame(right, bottom) {
       rig.setFrame(right, bottom, reducedMotion);
@@ -281,6 +300,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     ready,
     dispose() {
       disposed = true;
+      fade?.cancel();
       renderer.setAnimationLoop(null);
       resizeObserver.disconnect();
       rig.dispose();

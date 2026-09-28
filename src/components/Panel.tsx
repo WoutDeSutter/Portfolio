@@ -27,7 +27,9 @@ export function Panel({ title, backTo = '/', backLabel, children }: PanelProps) 
   useDocumentTitle(title);
 
   // Move focus to the heading when the panel opens, so screen readers announce it.
+  // In the text version the panel is the page, so a new page also starts at the top.
   useEffect(() => {
+    if (getComputedStyle(panelRef.current!).position !== 'fixed') window.scrollTo(0, 0);
     headingRef.current?.focus({ preventScroll: true });
   }, [title]);
 
