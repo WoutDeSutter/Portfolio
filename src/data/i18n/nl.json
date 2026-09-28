@@ -3,43 +3,23 @@
     "role": "XR Student MCT"
   },
   "common": {
-    "skipToContent": "Ga naar inhoud",
     "languageSwitch": "English",
-    "placeholderNotice": "Tijdelijke inhoud",
     "opensInNewTab": "(opent in een nieuw tabblad)"
   },
-  "stations": {
-    "entry": "Ingang",
-    "work": "Werk",
-    "lab": "Lab",
-    "about": "Over",
-    "contact": "Contact"
-  },
-  "floorPlan": {
-    "label": "Plattegrond van de stage"
-  },
-  "entry": {
-    "intro": "Tijdelijk — hier komt een korte persoonlijke introductie.",
-    "explore": "Verken de stage"
-  },
   "work": {
-    "heading": "Werk",
     "featured": "Uitgelicht",
     "more": "Meer projecten"
   },
   "lab": {
-    "heading": "Lab",
     "intro": "Experimenten, prototypes en kleinere technische verkenningen.",
     "empty": "Er zijn nog geen experimenten toegevoegd."
   },
   "about": {
-    "heading": "Over",
     "intro": "Tijdelijk — hier komen opleiding, interesses en visie op XR.",
     "skillsHeading": "Technologie",
     "usedIn": "Gebruikt in"
   },
   "contact": {
-    "heading": "Contact",
     "intro": "Open voor stages en samenwerkingen in XR en interactieve technologie.",
     "email": "E-mail",
     "linkedin": "LinkedIn",
@@ -74,7 +54,7 @@
     }
   },
   "project": {
-    "back": "Terug naar werk",
+    "back": "Terug naar projecten",
     "backToLab": "Terug naar lab",
     "notFound": "Dit project bestaat niet.",
     "technologies": "Technologie",
@@ -137,5 +117,35 @@
       "title": "Post-It Machine",
       "summary": "Tijdelijk — korte beschrijving van Post-It Machine."
     }
+  },
+  "places": {
+    "navLabel": "Plekken op het festival",
+    "entrance": "Ingang",
+    "about": "Over mij",
+    "foh": "Front of house",
+    "projects": "Projecten",
+    "lab": "Lab",
+    "contact": "Contact",
+    "links": "Links",
+    "merch": "Merch"
+  },
+  "panel": {
+    "back": "Terug naar het terrein"
+  },
+  "hint": {
+    "pointer": "Sleep om rond te kijken · klik op een kraampje",
+    "touch": "Veeg om rond te kijken · tik op een kraampje"
+  },
+  "foh": {
+    "intro": "De mengtafel. Straks kun je hier muziek op de speakers zetten en de lichten bedienen."
+  },
+  "merch": {
+    "intro": "Neem mijn cv mee naar huis."
+  },
+  "links": {
+    "empty": "Links worden binnenkort toegevoegd."
+  },
+  "fallback": {
+    "intro": "Je browser kan het 3D-festival niet tonen, dus hier is de tekstversie."
   }
 }

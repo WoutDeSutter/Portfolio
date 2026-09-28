@@ -3,43 +3,23 @@
     "role": "XR Student MCT"
   },
   "common": {
-    "skipToContent": "Skip to content",
     "languageSwitch": "Nederlands",
-    "placeholderNotice": "Placeholder content",
     "opensInNewTab": "(opens in a new tab)"
   },
-  "stations": {
-    "entry": "Entry",
-    "work": "Work",
-    "lab": "Lab",
-    "about": "About",
-    "contact": "Contact"
-  },
-  "floorPlan": {
-    "label": "Stage floor plan"
-  },
-  "entry": {
-    "intro": "Placeholder — a short personal introduction will be written here.",
-    "explore": "Explore the stage"
-  },
   "work": {
-    "heading": "Work",
     "featured": "Featured",
     "more": "More projects"
   },
   "lab": {
-    "heading": "Lab",
     "intro": "Experiments, prototypes and smaller technical explorations.",
     "empty": "No experiments have been added yet."
   },
   "about": {
-    "heading": "About",
     "intro": "Placeholder — education, interests and approach to XR will be written here.",
     "skillsHeading": "Technology",
     "usedIn": "Used in"
   },
   "contact": {
-    "heading": "Contact",
     "intro": "Open to internships and collaborations in XR and interactive technology.",
     "email": "Email",
     "linkedin": "LinkedIn",
@@ -74,7 +54,7 @@
     }
   },
   "project": {
-    "back": "Back to work",
+    "back": "Back to projects",
     "backToLab": "Back to lab",
     "notFound": "This project does not exist.",
     "technologies": "Technology",
@@ -137,5 +117,35 @@
       "title": "Post-It Machine",
       "summary": "Placeholder — short description of Post-It Machine."
     }
+  },
+  "places": {
+    "navLabel": "Places on the festival",
+    "entrance": "Entrance",
+    "about": "About me",
+    "foh": "Front of house",
+    "projects": "Projects",
+    "lab": "Lab",
+    "contact": "Contact",
+    "links": "Links",
+    "merch": "Merch"
+  },
+  "panel": {
+    "back": "Back to the terrain"
+  },
+  "hint": {
+    "pointer": "Drag to look around · click a booth",
+    "touch": "Swipe to look around · tap a booth"
+  },
+  "foh": {
+    "intro": "The mix position. Soon you can play music on the speakers and run the lights from here."
+  },
+  "merch": {
+    "intro": "Take my CV home with you."
+  },
+  "links": {
+    "empty": "Links will be added soon."
+  },
+  "fallback": {
+    "intro": "Your browser cannot show the 3D festival, so here is the text version."
   }
 }

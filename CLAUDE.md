@@ -92,6 +92,13 @@ src/data/i18n/en.json    # all English text: same keys as nl.json
 - Case-study sections are optional: a section is shown only when `projects.<slug>.sections.<id>` exists (ids in `PROJECT_SECTIONS`, `src/content/types.ts`).
 - Language: stored choice → browser language → English fallback.
 
+Code map:
+
+- `src/festival/places.ts` — every place on the terrain (id, route, position, facing, view distance); plain data shared by React and the world. `getPlaceForPath()` maps a URL to a place.
+- `src/festival/Festival.tsx` — the site layout: `WorldLayer` (3D), `Hotspots` (keyboard links), the EN/NL toggle, and the open panel via `<Outlet />`; text version without WebGL.
+- `src/world/` — plain Three.js, lazily loaded: `world.ts` (`createFestivalWorld()` → `{ goTo, setFrame, setLabels, ready, dispose }`), `rig.ts` (camera: place view + drag/zoom + cursor look, steps back / widens the view when the visible area is narrow), `greybox.ts` (block versions of booth, stage, FOH, entrance — to be replaced by Blender models), `sign.ts` (canvas-text signs).
+- `src/panels/` — one panel per place + `ProjectPanel` (case study) and `Overview` (hint / text-version intro). `components/Panel.tsx` handles focus, Esc and reports its size to the world (`PanelFrameContext`).
+
 Reused from v1 (tested): `src/content/`, `src/i18n/`, the case-study components (`ProjectSections`, `ProjectFacts`, `ProjectMedia`, `ProjectDemo`), `ContactForm`, `ExternalLink`, `utils/whenIdle.ts`, fonts, tokens, the deploy workflow.
 
 3D principles (learned in v1, keep them):

@@ -1,0 +1,29 @@
+.festival {
+  min-height: 100dvh;
+}
+
+/* The only permanent visible control: the language toggle, top right */
+.festival__corner {
+  position: fixed;
+  z-index: 20;
+  top: var(--space-4);
+  right: var(--space-4);
+  display: flex;
+  gap: var(--space-2);
+}
+
+/* With a panel open on desktop, the toggle sits above the panel's top edge area */
+@media (min-width: 48rem) {
+  .festival:has(.panel) .festival__corner {
+    right: calc(min(30rem, 42vw) + var(--space-8));
+  }
+}
+
+/* Text version (no WebGL) */
+.festival--flat {
+  padding: var(--space-4) var(--gutter) var(--space-16);
+}
+
+.festival--flat .festival__main {
+  padding-top: var(--space-8);
+}
