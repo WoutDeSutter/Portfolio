@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { Link, Outlet, useLocation } from 'react-router';
 import { site } from '../content/content';
+import { useSceneSupport } from '../hooks/useSceneSupport';
 import { useTranslation } from '../i18n/useTranslation';
 import { CvButton } from './CvButton';
 import { FloorPlan } from './FloorPlan';
 import { LanguageSwitch } from './LanguageSwitch';
+import { SceneLayer } from './SceneLayer';
 import './Shell.css';
 
 /**
@@ -16,6 +18,7 @@ export function Shell() {
   const { pathname } = useLocation();
   const mainRef = useRef<HTMLElement>(null);
   const isFirstRender = useRef(true);
+  const showScene = useSceneSupport();
 
   // After navigating, start at the top and move keyboard/screen-reader focus to the new content.
   useEffect(() => {
@@ -34,7 +37,9 @@ export function Shell() {
   };
 
   return (
-    <div className="shell">
+    <div className={showScene ? 'shell shell--scene' : 'shell'}>
+      {showScene && <SceneLayer />}
+
       <a className="skip-link" href="#main" onClick={skipToContent}>
         {t('common.skipToContent')}
       </a>
@@ -55,7 +60,7 @@ export function Shell() {
       </main>
 
       <aside className="shell__plan">
-        <FloorPlan />
+        <FloorPlan showView={showScene} />
       </aside>
     </div>
   );

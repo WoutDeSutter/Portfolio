@@ -25,6 +25,13 @@
   stroke: var(--color-accent);
 }
 
+/* Camera view cone; moves in the same time as the 3D camera (TRAVEL_DURATION) */
+.floor-plan__view {
+  fill: var(--color-accent-dim);
+  opacity: 0.6;
+  transition: transform 1.6s cubic-bezier(0.45, 0, 0.55, 1);
+}
+
 .floor-plan__mark rect {
   fill: var(--color-bg);
   stroke: var(--color-text-muted);
