@@ -151,10 +151,10 @@ export function createFoh(materials: GreyboxMaterials): PlaceObject {
   desktop.rotation.x = 0.2;
   group.add(desktop);
 
-  const hitArea = hitBox(5.5, 4.5, 4.5, materials);
+  const hitArea = hitBox(5.5, 5.5, 4.5, materials);
   group.add(hitArea);
 
-  return withVisual({ group, hitArea, focus: new Vector3(0, 1.3, -0.6) });
+  return withVisual({ group, hitArea, focus: new Vector3(0.35, 1.7, -0.6) });
 }
 
 /** Entrance arch with a banner (name and role), facing the arriving visitor. */

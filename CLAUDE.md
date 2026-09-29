@@ -84,6 +84,7 @@ Keep content out of React components:
 src/data/projects.json   # language-neutral project data (slug, kind, status, tech, media, links)
 src/data/skills.json     # skill ids referenced by projects.json `technologies`
 src/data/site.json       # name, contact channels, CV path, Formspree id
+src/data/music.json      # FOH tracks (file in public/music, title, artist, credit)
 src/data/i18n/nl.json    # all Dutch text: UI strings + translatable project content
 src/data/i18n/en.json    # all English text: same keys as nl.json
 ```
@@ -99,6 +100,9 @@ Code map:
 - `src/festival/places.ts` — every place on the terrain (id, route, position, facing, view distance); plain data shared by React and the world. `getPlaceForPath()` maps a URL to a place.
 - `src/festival/Festival.tsx` — the site layout: `WorldLayer` (3D), `Hotspots` (keyboard links), the EN/NL toggle, and the open panel via `<Outlet />`; text version without WebGL.
 - `src/world/` — plain Three.js, lazily loaded: `world.ts` (`createFestivalWorld()` → `{ goTo, setFrame, setLabels, ready, dispose }`), `rig.ts` (camera: place view + drag/zoom + cursor look, steps back / widens the view when the visible area is narrow), `greybox.ts` (block versions of booth, stage, FOH, entrance, plus their signs, click areas and focus points), `models.ts` (loads the Blender `.glb` files and merges them per material; the world swaps each place's blocks for its model), `sign.ts` (canvas-text signs), `items.ts` (loads a project's animated item — `projects.json → model` — for the booth counter; the world scales it to fit, plays its clips and turns it only while that booth is open and motion is allowed), `board.ts` (the board on each booth's back wall — Projects menu, Lab tap list, … — drawn from the same content as the panels; rows with a route are clickable).
+- `src/audio/music.ts` — the FOH music (one audio element through Web Audio; `play/pause/stop/setMuted`, `useMusic()` for React). The world plugs its speakers in with `setSpatializer()` (`world/speakers.ts`: `PositionalAudio` at the stage line arrays, `AudioListener` on the camera) and reads `getLevel()` for the lights. Tracks: `src/data/music.json` + `public/music/`.
+- `src/festival/lights.ts` — the stage lights set at the lighting desk: a mode (wash / beams / show / blackout) plus one or more colours; `world/show.ts` turns it into spots, moving-head lenses and beams (the show sweeps, pulses with the music and alternates the colours; still with reduced motion).
+- `world/fohDesk.ts` + `world/screen.ts` — the clickable screens on the FOH desks (tracks, now playing with level meter and transport, light modes and colours). Clicks go to the site as actions (`onFoh`), the site sends the state back (`setFohState`); the FOH panel has the same controls as HTML.
 - `src/panels/` — one panel per place + `ProjectPanel` (case study) and `Overview` (hint / text-version intro). `components/Panel.tsx` handles focus, Esc and reports its size to the world (`PanelFrameContext`).
 
 Reused from v1 (tested): `src/content/`, `src/i18n/`, the case-study components (`ProjectSections`, `ProjectFacts`, `ProjectMedia`, `ProjectDemo`), `ContactForm`, `ExternalLink`, `utils/whenIdle.ts`, fonts, tokens, the deploy workflow.

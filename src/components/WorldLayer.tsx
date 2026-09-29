@@ -1,12 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { getProject, getProjectsByKind, site } from '../content/content';
+import { getProject, getProjectsByKind, site, tracks } from '../content/content';
 import type { Project } from '../content/types';
+import { getState as getMusicState, pause, play, setVolume, stop } from '../audio/music';
+import { useMusic } from '../audio/useMusic';
+import { LIGHT_MODES, setLightMode, toggleLightColor, useLights, type LightMode } from '../festival/lights';
 import { OPENABLE_PLACES, getPlaceForPath, type PlaceId } from '../festival/places';
 import { useReducedMotion } from '../hooks/useMediaQuery';
 import { useTranslation } from '../i18n/useTranslation';
 import { whenIdle } from '../utils/whenIdle';
 import type { BoardRow } from '../world/board';
+import type { FohAction } from '../world/fohDesk';
 import type { FestivalWorld, HoverInfo, WorldLabels } from '../world/world';
 import './WorldLayer.css';
 
@@ -65,6 +69,35 @@ function itemsFor(pathname: string): { projects: string | null; lab: string | nu
   };
 }
 
+/** A click on one of the FOH desk screens in the world: the same actions as the FOH panel. */
+function runFohAction(action: FohAction) {
+  switch (action.type) {
+    case 'track': {
+      const track = tracks.find((candidate) => candidate.id === action.id);
+      if (!track) return;
+      const { track: current, playing } = getMusicState();
+      if (current?.id === track.id && playing) pause();
+      else play(track);
+      return;
+    }
+    case 'play': {
+      const current = getMusicState().track;
+      if (current) play(current);
+      return;
+    }
+    case 'pause':
+      return pause();
+    case 'stop':
+      return stop();
+    case 'volume':
+      return setVolume(action.value);
+    case 'mode':
+      return setLightMode(action.mode);
+    case 'color':
+      return toggleLightColor(action.color);
+  }
+}
+
 export function WorldLayer({ frame, onFail }: WorldLayerProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const worldRef = useRef<FestivalWorld | null>(null);
@@ -76,6 +109,8 @@ export function WorldLayer({ frame, onFail }: WorldLayerProps) {
   const { pathname } = useLocation();
   const placeId = getPlaceForPath(pathname).id;
   const items = itemsFor(pathname);
+  const lights = useLights();
+  const music = useMusic();
 
   const labels: WorldLabels = {
     places: Object.fromEntries(OPENABLE_PLACES.map((place) => [place.id, t(`places.${place.id}`)])) as Record<
@@ -85,15 +120,36 @@ export function WorldLayer({ frame, onFail }: WorldLayerProps) {
     boards: useBoards(),
     name: site.name,
     role: t('meta.role'),
+    foh: {
+      tracks,
+      music: t('foh.music'),
+      lights: t('foh.lights'),
+      colors: t('foh.colors'),
+      volume: t('foh.volume'),
+      noTracks: t('foh.noTracks'),
+      nowPlaying: t('foh.nowPlaying'),
+      paused: t('foh.paused'),
+      idle: t('foh.idle'),
+      modes: Object.fromEntries(LIGHT_MODES.map((mode) => [mode, t(`foh.modes.${mode}`)])) as Record<LightMode, string>,
+    },
   };
 
   // Refs let the loading effect read the latest values without restarting the world.
   // `navigate` is among them: React Router gives it a new identity on every route change,
   // and as an effect dependency it would rebuild the whole world on each click.
-  const latest = useRef({ placeId, labels, frame, items, navigate, onFail });
+  const fohState = { track: music.track?.id ?? null, playing: music.playing, volume: music.volume, lights };
+  const latest = useRef({ placeId, labels, frame, items, lights, fohState, navigate, onFail });
   useEffect(() => {
-    latest.current = { placeId, labels, frame, items, navigate, onFail };
+    latest.current = { placeId, labels, frame, items, lights, fohState, navigate, onFail };
   });
+
+  useEffect(() => {
+    worldRef.current?.setFohState(latest.current.fohState);
+  }, [fohState.track, fohState.playing, fohState.volume, lights]);
+
+  useEffect(() => {
+    worldRef.current?.setLights(lights);
+  }, [lights]);
 
   useEffect(() => {
     worldRef.current?.showItem('projects', items.projects);
@@ -127,10 +183,13 @@ export function WorldLayer({ frame, onFail }: WorldLayerProps) {
             reducedMotion,
             onNavigate: (path) => latest.current.navigate(path),
             onHover: setHover,
+            onFoh: runFohAction,
           });
           world.setFrame(latest.current.frame.right, latest.current.frame.bottom);
           world.showItem('projects', latest.current.items.projects);
           world.showItem('lab', latest.current.items.lab);
+          world.setLights(latest.current.lights);
+          world.setFohState(latest.current.fohState);
           worldRef.current = world;
           return world.ready.then(() => {
             if (cancelled) return;

@@ -1,13 +1,15 @@
 import projectsData from '../data/projects.json';
 import skillsData from '../data/skills.json';
+import musicData from '../data/music.json';
 import siteData from '../data/site.json';
-import type { Project, ProjectKind, SiteConfig, Skill } from './types';
+import type { Project, ProjectKind, SiteConfig, Skill, Track } from './types';
 
 // JSON imports are loosely typed; these casts tell TypeScript which shape we
 // expect. types.ts is the contract that the JSON files must follow.
 export const projects = projectsData as Project[];
 export const skills = skillsData as Skill[];
 export const site = siteData as SiteConfig;
+export const tracks = musicData as Track[];
 
 export function getProject(slug: string): Project | undefined {
   return projects.find((project) => project.slug === slug);

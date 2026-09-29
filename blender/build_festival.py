@@ -702,7 +702,7 @@ def build_foh():
         base.box(1.2, 0.15 * (i + 1), 0.3, 0, 0, 2.3 - i * 0.3, "wood_dark")
     for x in (-2.3, 2.3):
         for z in (-1.8, 1.8):
-            base.cylinder(0.05, 3.0, x, 0.3, z, "metal", segments=8)
+            base.cylinder(0.05, 3.6, x, 0.3, z, "metal", segments=8)
     # Bike-rack barriers around the sides and the stage side (open at the back for the steps)
     for x0, z0, x1, z1 in ((-3.2, -2.7, 3.2, -2.7), (-3.2, -2.7, -3.2, 2.7), (3.2, -2.7, 3.2, 2.7)):
         base.beam((x0, 1.0, z0), (x1, 1.0, z1), 0.04, "metal", round_=True)
@@ -715,30 +715,56 @@ def build_foh():
     base.build()
 
     roof = Part("foh_roof", col)
-    roof.cylinder(3.6, 1.6, 0, 3.3, 0, "fabric", segments=4, rot=(0, math.pi / 4, 0), radius_top=0.05)
+    roof.cylinder(3.6, 1.6, 0, 3.9, 0, "fabric", segments=4, rot=(0, math.pi / 4, 0), radius_top=0.05)
     # Red band around the edge of the tent roof
     for x, z, w, d in ((0, 2.55, 5.1, 0.04), (0, -2.55, 5.1, 0.04), (2.55, 0, 0.04, 5.1), (-2.55, 0, 0.04, 5.1)):
-        roof.box(w, 0.28, d, x, 3.02, z, "accent")
+        roof.box(w, 0.28, d, x, 3.62, z, "accent")
     roof.build()
 
     desk = Part("foh_desk", col)
-    # Mixing desk: body, sloped control surface with faders, two screens facing the engineer (+z)
-    desk.box(2.6, 0.9, 1.0, 0, 0.3, -0.7, "black", bevel=0.02)
-    tilt = -0.2
-    desk.box(2.6, 0.06, 1.1, 0, 1.23, -0.7, "deck", rot=(tilt, 0, 0), centered=True)
-    for row in range(2):
-        for i in range(16):
-            x = -1.12 + i * 0.15
-            z = -0.4 - row * 0.45
-            y = 1.28 + (z + 0.7) * -math.tan(tilt)
-            desk.box(0.04, 0.03, 0.08, x, y, z, "metal" if i % 4 else "accent", rot=(tilt, 0, 0))
-    for x in (-0.65, 0.65):
-        desk.box(0.9, 0.55, 0.05, x, 1.45, -1.2, "black", rot=(-0.25, 0, 0))
-        desk.box(0.82, 0.47, 0.01, x, 1.49, -1.17, "screen", rot=(-0.25, 0, 0))
-    # A small lighting desk on a side table
-    desk.box(1.0, 0.9, 0.7, 1.85, 0.3, -1.0, "wood")
-    desk.box(0.9, 0.12, 0.55, 1.85, 1.2, -1.0, "black", bevel=0.01)
-    desk.box(0.5, 0.3, 0.02, 1.85, 1.35, -1.25, "screen", rot=(-0.3, 0, 0))
+    # Audio desk, facing the engineer (+z): the control surface rises towards the stage, faders at
+    # the front, knobs behind them, and a meter bridge at the back carrying two screens.
+    # The screens themselves are drawn by the site (src/world/fohDesk.ts, SCREENS); keep the bezels
+    # below in the same place.
+    depth, near, far, width = 1.05, 0.78, 0.98, 2.3
+    desk.extruded([(0, 0), (depth, 0), (depth, far), (0, near)], width, 0, 0.3, -0.25, "black", rot=(0, math.pi / 2, 0))
+    slope = math.atan2(far - near, depth)
+
+    def surface(u):  # (y, z) on the control surface, u metres from the engineer's edge
+        return 0.3 + near + u * (far - near) / depth, -0.25 - u
+
+    y, z = surface(depth / 2)
+    desk.box(width - 0.08, 0.02, depth - 0.04, 0, y + 0.01, z, "deck", rot=(slope, 0, 0), centered=True)
+    channels = 20
+    for i in range(channels):
+        x = -1.0 + i * 2.0 / (channels - 1)
+        y, z = surface(0.2)
+        desk.box(0.012, 0.012, 0.26, x, y + 0.02, z, "black", rot=(slope, 0, 0), centered=True)  # fader slot
+        # The fader caps are added by the site (fohDesk.ts), so they can follow the volume.
+        for row, u in enumerate((0.45, 0.56, 0.67)):
+            y, z = surface(u)
+            desk.cylinder(0.016, 0.025, x, y + 0.01, z, "metal" if row else "accent", segments=6)
+    y, _ = surface(depth)
+    desk.box(width, 0.14, 0.16, 0, y - 0.02, -1.22, "black", bevel=0.01)  # meter bridge
+    for x in (-0.55, 0.55):
+        desk.box(1.06, 0.64, 0.04, x, 1.695, -1.195, "black", rot=(-0.2, 0, 0), centered=True, bevel=0.008)
+        desk.box(0.12, 0.08, 0.06, x, y + 0.12, -1.21, "black")
+
+    # Lighting desk on a table on the right: a flat console with its screen behind it
+    table_top = 1.06
+    desk.box(0.9, 0.04, 0.75, 1.8, table_top, -0.875, "wood_dark", bevel=0.005)
+    for x in (1.39, 2.21):
+        for z in (-1.21, -0.54):
+            desk.box(0.04, table_top - 0.3, 0.04, x, 0.3, z, "metal")
+    top = table_top + 0.04
+    desk.extruded([(0, 0), (0.5, 0), (0.5, 0.12), (0, 0.06)], 0.85, 1.8, top, -0.55, "black", rot=(0, math.pi / 2, 0))
+    light_slope = math.atan2(0.06, 0.5)
+    for i in range(10):
+        x = 1.44 + i * 0.08
+        u = 0.12 + 0.12 * ((i * 3) % 5) / 5
+        desk.box(0.03, 0.025, 0.03, x, top + 0.06 + u * 0.12 + 0.012, -0.55 - u, "accent" if i % 5 == 0 else "metal", rot=(light_slope, 0, 0), centered=True)
+    desk.box(0.86, 0.54, 0.04, 1.8, 1.554, -1.104, "black", rot=(-0.25, 0, 0), centered=True, bevel=0.008)
+    desk.box(0.1, 0.2, 0.05, 1.8, top + 0.1, -1.1, "black")
     desk.build()
 
 

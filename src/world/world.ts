@@ -11,7 +11,6 @@ import {
   PointLight,
   Raycaster,
   Scene,
-  SpotLight,
   Texture,
   Vector2,
   Vector3,
@@ -28,9 +27,15 @@ import {
   createStage,
   type PlaceObject,
 } from './greybox';
+import { getLevel, setSpatializer } from '../audio/music';
+import type { LightState } from '../festival/lights';
 import { loadItem } from './items';
 import { loadModels, type ModelName, type Models } from './models';
 import { BASE_FOV, CameraRig, type View } from './rig';
+import { createFohDesk, type FohAction, type FohLabels, type FohState } from './fohDesk';
+import type { CanvasScreen, Hotspot } from './screen';
+import { createStageShow } from './show';
+import { createSpeakers } from './speakers';
 import { readWorldColors } from './theme';
 
 export type HoverInfo = { labelKey: string; clientX: number; clientY: number };
@@ -39,6 +44,8 @@ export type HoverInfo = { labelKey: string; clientX: number; clientY: number };
 export type WorldLabels = {
   places: Record<PlaceId, string>;
   boards: Partial<Record<PlaceId, BoardContent>>;
+  /** Tracks and texts on the FOH desk screens. */
+  foh: FohLabels;
   name: string;
   role: string;
 };
@@ -50,10 +57,16 @@ export type WorldOptions = {
   /** Visitor clicked a place (or empty ground while a place is open → the overview). */
   onNavigate: (path: string) => void;
   onHover: (info: HoverInfo | null) => void;
+  /** Visitor used a screen on the FOH desks (play a track, pick a light colour, …). */
+  onFoh: (action: FohAction) => void;
 };
 
 export type FestivalWorld = {
   goTo: (id: PlaceId) => void;
+  /** Stage lights, set at the lighting desk. */
+  setLights: (lights: LightState) => void;
+  /** What the FOH desk screens show: the playing track and the lights. */
+  setFohState: (state: FohState) => void;
   /** Put a project's animated model on the counter of a booth (or clear it with null). */
   showItem: (id: PlaceId, path: string | null) => void;
   /** Pixels covered by an open panel on the right / at the bottom. */
@@ -82,7 +95,7 @@ const ITEM_FIT = { width: 0.6, height: 0.5 };
 const PINCH_SPEED = 3; // zoom per pixel the fingers move together/apart
 
 export function createFestivalWorld(container: HTMLElement, options: WorldOptions): FestivalWorld {
-  const { reducedMotion, onNavigate, onHover } = options;
+  const { reducedMotion, onNavigate, onHover, onFoh } = options;
   const colors = readWorldColors();
 
   const renderer = new WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
@@ -167,17 +180,17 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       const interior = place.kind === 'booth' ? models[`booth_${place.id}` as ModelName] : undefined;
       if (interior) object.visual.add(interior);
       object.group.add(object.visual);
+      if (place.kind === 'stage') show.useLenses(object.visual);
     }
   }
 
-  // Red stage light from the truss
-  const stage = findPlace('about');
-  for (const x of [-5, 5]) {
-    const spot = new SpotLight(colors.accent, 250, 25, 0.45, 0.6);
-    spot.position.set(stage.x + x, 9, stage.z + 3);
-    spot.target.position.set(stage.x + x * 0.3, 1.4, stage.z);
-    scene.add(spot, spot.target);
-  }
+  // Stage lights (controlled from the FOH desk) and the speakers the FOH music plays from
+  const stageObject = objects.get('about')!;
+  const show = createStageShow(scene, stageObject.group, reducedMotion);
+  const fohDesk = createFohDesk(objects.get('foh')!.group, reducedMotion);
+  scene.updateMatrixWorld();
+  const speakerPositions = (stageObject.speakers ?? []).map((position) => stageObject.group.localToWorld(position.clone()));
+  setSpatializer(createSpeakers(scene, camera, speakerPositions));
 
   // Labels
   function applyLabels(labels: WorldLabels) {
@@ -186,13 +199,16 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       else object.sign?.setText(labels.places[id]);
     }
     for (const [id, board] of boards) board.setContent(labels.boards[id] ?? { title: labels.places[id] });
+    fohDesk.setLabels(labels.foh);
     invalidate();
   }
+  let latestLabels = options.labels.foh;
   applyLabels(options.labels);
   // Signs use the web fonts; redraw once they are available.
   document.fonts?.ready.then(() => {
     for (const object of objects.values()) object.sign?.draw();
     for (const board of boards.values()) board.draw();
+    fohDesk.setLabels(latestLabels);
     invalidate();
   });
 
@@ -203,9 +219,9 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     const object = objects.get(id)!;
     const target = object.focus.clone().applyAxisAngle(new Vector3(0, 1, 0), place.facing);
     target.add(new Vector3(place.x, 0, place.z));
-    // FOH: low, behind the engineer and under the tent roof, looking over the desk towards the stage.
+    // FOH: inside the tent, behind the engineer, looking over the desk towards the stage.
     // Booths: almost at eye level, so the camera looks under the awning at the board inside.
-    const phi = place.kind === 'foh' ? 1.32 : place.kind === 'stage' ? 1.3 : 1.44;
+    const phi = place.kind === 'foh' ? 1.38 : place.kind === 'stage' ? 1.3 : 1.44;
     return { target, theta: place.facing, phi, radius: place.viewDistance };
   }
 
@@ -272,7 +288,10 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     lastTime = now;
     const moved = rig.update(camera, pointer, size.width, size.height);
     const animated = updateItems(seconds);
-    if (!moved && !needsRender && !animated) return;
+    const level = getLevel();
+    const lights = show.update(seconds, level);
+    const meter = fohDesk.update(level, currentPlace === 'foh');
+    if (!moved && !needsRender && !animated && !lights && !meter) return;
     renderer.render(scene, camera);
     needsRender = false;
   }
@@ -331,6 +350,26 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     if (board?.setHovered(target?.row ?? null)) invalidate();
   }
 
+  /** The button under the pointer on the FOH desk screens, while the FOH is open. */
+  function screenHotspotAt(event: PointerEvent): { screen: CanvasScreen; hotspot: Hotspot } | null {
+    if (currentPlace !== 'foh') return null;
+    const point = new Vector2();
+    toNormalized(event, point);
+    raycaster.setFromCamera(point, camera);
+    const hit = raycaster.intersectObjects(fohDesk.screens.map((screen) => screen.mesh), false)[0];
+    const screen = fohDesk.screens.find((candidate) => candidate.mesh === hit?.object);
+    const hotspot = screen && hit.uv ? screen.hotspotAt(hit.uv) : null;
+    return screen && hotspot ? { screen, hotspot } : null;
+  }
+
+  function setHoveredScreen(target: { screen: CanvasScreen; hotspot: Hotspot } | null) {
+    let changed = false;
+    for (const screen of fohDesk.screens) {
+      changed = screen.setHovered(screen === target?.screen ? target.hotspot.id : null) || changed;
+    }
+    if (changed) invalidate();
+  }
+
   function setHovered(id: PlaceId | null, event?: PointerEvent) {
     if (id !== hovered) {
       if (hovered) objects.get(hovered)?.sign?.setHighlighted(false);
@@ -381,7 +420,9 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     }
     const row = boardRowAt(event);
     setHoveredRow(row);
-    if (row) {
+    const button = screenHotspotAt(event);
+    setHoveredScreen(button);
+    if (row || button) {
       setHovered(null);
       canvas.style.cursor = 'pointer';
       return;
@@ -401,6 +442,13 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       onNavigate(row.row.path);
       return;
     }
+    const button = screenHotspotAt(event);
+    if (button) {
+      const action = fohDesk.press(button.hotspot);
+      if (action) onFoh(action);
+      invalidate();
+      return;
+    }
     const id = placeAt(event);
     if (id && id !== currentPlace) onNavigate(findPlace(id).path);
     else if (!id && currentPlace !== 'entrance') onNavigate('/');
@@ -409,6 +457,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     if (press) return;
     setHovered(null);
     setHoveredRow(null);
+    setHoveredScreen(null);
   };
   const onWheel = (event: WheelEvent) => {
     event.preventDefault();
@@ -464,14 +513,28 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       else rig.goTo(viewFor(id), false);
     },
     showItem,
+    setLights(lights) {
+      show.setLights(lights);
+      invalidate();
+    },
+    setFohState(state) {
+      fohDesk.setState(state);
+      invalidate();
+    },
     setFrame(right, bottom) {
       rig.setFrame(right, bottom, reducedMotion);
     },
-    setLabels: applyLabels,
+    setLabels(labels) {
+      latestLabels = labels.foh;
+      applyLabels(labels);
+    },
     ready,
     dispose() {
       disposed = true;
       fade?.cancel();
+      setSpatializer(null);
+      show.dispose();
+      fohDesk.dispose();
       renderer.setAnimationLoop(null);
       for (const shown of items.values()) shown.mixer?.stopAllAction();
       resizeObserver.disconnect();

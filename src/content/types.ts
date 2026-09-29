@@ -87,3 +87,14 @@ export type SiteConfig = {
   cv: { file: string };
   contactForm: { formspreeId: string };
 };
+
+/** A track for the FOH easter egg (src/data/music.json). Title and credit are shown while it plays. */
+export type Track = {
+  id: string;
+  /** Relative to public/, e.g. "music/alan-walker-dreamer.mp3". */
+  file: string;
+  title: string;
+  artist: string;
+  /** Credit line required by the licence, e.g. "Music provided by NoCopyrightSounds". */
+  credit: string;
+};

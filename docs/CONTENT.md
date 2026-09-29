@@ -162,6 +162,28 @@ Tips: keep it low-poly (the whole terrain is currently around 700 kB), reuse the
 
 Don't run `build_festival.py` again once you have edited the `.blend`: it rebuilds the models from code and overwrites your changes.
 
+## 9. Music (FOH easter egg)
+
+Visitors can put music on the stage speakers from the FOH desk. It never starts by itself.
+
+1. Put the MP3 in `public/music/`, with a simple file name (lowercase, dashes, no spaces), e.g. `alan-walker-dreamer.mp3`.
+2. Add it to `src/data/music.json`:
+
+   ```json
+   {
+     "id": "alan-walker-dreamer",
+     "file": "music/alan-walker-dreamer.mp3",
+     "title": "Dreamer",
+     "artist": "Alan Walker",
+     "credit": "Music provided by NoCopyrightSounds"
+   }
+   ```
+
+   The FOH shows title, artist and `credit` while the track plays; use the credit line the licence asks for. Tracks play in the order of the list and loop.
+3. Keep files reasonably small (a 3–4 minute MP3 at 128–192 kbps is 3–6 MB). They only download when someone presses play.
+
+Check NCS's current usage terms for websites before publishing a track.
+
 ## Check your changes
 
 ```bash
