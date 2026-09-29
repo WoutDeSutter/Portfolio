@@ -34,7 +34,7 @@ The whole site is **one fully 3D, interactive festival terrain at night**. Wout 
 
 ## UI rules
 
-- **No visible interface chrome**: no header, logo bar, menus or minimap. Identity (name, role) lives *in the world* (LED wall, entrance arch).
+- **No visible interface chrome**: no header, logo bar, menus or minimap. Identity (name, role) lives *in the world* (the LED wall and side screens of the stage).
 - The **only** permanent visible control is the **EN/NL language toggle**. While music plays, a **mute button** appears next to it (and disappears when the music stops).
 - Signs on booths are translated labels (from the i18n files), not hardcoded text.
 - Accessibility without chrome: keyboard and screen-reader users get hotspot buttons for every place, **visible only when focused**. Content panels are real HTML (headings, links, focus management). Without WebGL, or when the world fails to start, the site falls back to a simple text version — the only place where conventional navigation is visible. Test it during development by adding `?text` before the hash (`localhost:5173/?text#/about`).

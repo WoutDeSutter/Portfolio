@@ -1289,32 +1289,40 @@ def build_trees(col):
 
 
 def build_festoons(col):
-    """Wooden poles along the main path with strings of warm bulbs across it."""
+    """Festoon lights: wooden poles with single strings of warm bulbs, straight across the main
+    path, fanning out over the picnic tables, and from the FOH tent to the path and the tables.
+    The extra poles stand outside the views of the booths (see the cameras in world.ts)."""
     part = Part("terrain_festoons", col)
-    poles = [(side * 2.6, z) for z in (20.0, 15.0, 10.0) for side in (-1, 1)]
-    for x, z in poles:
+    path_poles = [(side * 2.6, z) for z in (20.0, 15.0, 10.0) for side in (-1, 1)]
+    table_poles = [(side * 9.0, 16.2) for side in (-1, 1)] + [(side * 7.6, 0.5) for side in (-1, 1)]
+    for x, z in path_poles + table_poles:
         part.cylinder(0.07, 4.6, x, 0, z, "wood_dark", segments=6)
         part.box(0.3, 0.12, 0.3, x, 0, z, "black")
 
-    def string(a, b, sag=0.55, bulbs=11):
+    def string(a, b, sag=0.55, heights=(4.4, 4.4)):
         (ax, az), (bx, bz) = a, b
-        top = 4.4
+        length = math.hypot(bx - ax, bz - az)
+        bulbs = max(6, round(length / 0.5))
         points = []
         for k in range(bulbs + 1):
             t = k / bulbs
-            points.append((ax + (bx - ax) * t, top - sag * 4 * t * (1 - t), az + (bz - az) * t))
+            y = heights[0] + (heights[1] - heights[0]) * t - sag * 4 * t * (1 - t)
+            points.append((ax + (bx - ax) * t, y, az + (bz - az) * t))
         for p0, p1 in zip(points, points[1:]):
             part.beam(p0, p1, 0.014, "black", round_=True, segments=3, caps=False)
         for p in points[1:-1]:
             part.sphere(0.06, p[0], p[1] - 0.08, p[2], "bulb", subdivisions=1)
 
-    for z in (20.0, 15.0, 10.0):
+    for z in (20.0, 15.0, 10.0):  # straight across the main path
         string((-2.6, z), (2.6, z))
-    for z0, z1 in ((20.0, 15.0), (15.0, 10.0)):
-        string((-2.6, z0), (2.6, z1), sag=0.7)
-        string((2.6, z0), (-2.6, z1), sag=0.7)
-    for side in (-1, 1):  # along the sides of the path
-        string((side * 2.6, 20.0), (side * 2.6, 10.0), sag=0.8, bulbs=16)
+    for side in (-1, 1):
+        outer = (side * 9.0, 16.2)
+        for z in (20.0, 15.0, 10.0):  # over the picnic tables beside the path
+            string((side * 2.6, z), outer, sag=0.7)
+        # From the FOH tent (pole tops at 3.9 m, tent at z 3 ± 1.8) to the path and the tables
+        tent_back, tent_front = (side * 2.3, 4.8), (side * 2.3, 1.2)
+        string(tent_back, (side * 2.6, 10.0), sag=0.6, heights=(3.8, 4.4))
+        string(tent_front, (side * 7.6, 0.5), sag=0.6, heights=(3.8, 4.4))
     part.build()
 
 
@@ -1402,9 +1410,6 @@ def build_entrance():
         truss(arch, (x, 0.41, 0), "y", 5.4 - 0.3 - 0.41, size=0.5)
         truss_node(arch, (x, 5.4, 0), size=0.5)
     truss_span(arch, (-5.6, 5.4, 0), (5.6, 5.4, 0), "x", size=0.5)
-    arch.box(10.46, 1.76, 0.06, 0, 4.4, 0.46, "black", centered=True)
-    for x in (-4, 0, 4):
-        arch.beam((x, 5.28, 0.46), (x, 5.15, 0.46), 0.02, "black")
     arch.build()
 
     fence = Part("entrance_fence", col)
