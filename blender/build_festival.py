@@ -55,6 +55,10 @@ MATERIALS = {
     "trackway": ((0.026, 0.028, 0.031), 0.9, 0.0, None, 0),
     "pine": ((0.01, 0.022, 0.015), 0.95, 0.0, None, 0),
     "crowd": ((0.03, 0.032, 0.042), 0.9, 0.0, None, 0),
+    "ui_tile": ((0.3, 0.31, 0.33), 0.5, 0.0, (0.62, 0.64, 0.68), 0.9),
+    "ui_green": ((0.1, 0.5, 0.2), 0.5, 0.0, (0.25, 0.95, 0.45), 2.0),
+    "ui_amber": ((0.5, 0.35, 0.05), 0.5, 0.0, (1.0, 0.65, 0.1), 2.0),
+    "ui_blue": ((0.05, 0.1, 0.5), 0.5, 0.0, (0.2, 0.4, 1.0), 2.0),
     "wood_dark": ((0.10, 0.065, 0.04), 0.9, 0.0, None, 0),
     "metal": ((0.40, 0.41, 0.43), 0.45, 0.85, None, 0),
     "black": ((0.025, 0.025, 0.028), 0.7, 0.0, None, 0),
@@ -361,13 +365,15 @@ def build_booth_projects():
     part.box(0.7, 0.08, 0.45, 0.9, 1.11, -0.8, "steel", bevel=0.01)
     for x in (0.72, 1.08):
         part.box(0.25, 0.02, 0.3, x, 1.19, -0.8, "black")
-    # Sauce bottles, a napkin holder and an order bell on the front counter
-    for x, material in ((-1.5, "accent"), (-1.38, "black"), (-1.26, "accent")):
+    # Sauce bottles, a napkin holder and an order bell on the front counter. They are also the
+    # obstacles of the TagRun runner (item_tagrun: `fixed`); the left end of the counter stays
+    # free for his backflip.
+    for x, material in ((-1.05, "accent"), (-0.93, "black"), (-0.81, "accent")):
         part.cylinder(0.04, 0.2, x, 1.06, 1.1, material, segments=8)
         part.cylinder(0.012, 0.05, x, 1.26, 1.1, "black", segments=6)
-    part.box(0.16, 0.12, 0.08, -0.95, 1.06, 1.1, "steel")
-    part.box(0.14, 0.1, 0.06, -0.95, 1.06, 1.1, "paper")
-    part.cylinder(0.07, 0.05, -0.55, 1.06, 1.1, "steel", segments=10, radius_top=0.01)
+    part.box(0.16, 0.12, 0.08, -0.55, 1.06, 1.1, "steel")
+    part.box(0.14, 0.1, 0.06, -0.55, 1.06, 1.1, "paper")
+    part.cylinder(0.07, 0.05, -0.25, 1.06, 1.1, "steel", segments=10, radius_top=0.01)
     # Serving tray for the project item (placed by the site at x 1.15)
     part.cylinder(0.3, 0.02, 1.15, 1.03, 1.02, "steel", segments=16)
     part.build()
@@ -489,20 +495,219 @@ def wave(t, cycles=1):
     return math.sin(t * cycles * math.tau)
 
 
+# Seven-segment digits, for the bomb timer and the TagRun clock. A digit is 7 objects that are
+# shown (scale 1) or hidden (scale ~0) per frame.
+SEGMENTS = {  # (x, y, w, h) in a 0.03 × 0.05 cell
+    "a": (0.0, 0.024, 0.022, 0.005), "b": (0.012, 0.012, 0.005, 0.021), "c": (0.012, -0.012, 0.005, 0.021),
+    "d": (0.0, -0.024, 0.022, 0.005), "e": (-0.012, -0.012, 0.005, 0.021), "f": (-0.012, 0.012, 0.005, 0.021),
+    "g": (0.0, 0.0, 0.022, 0.005),
+}
+DIGITS = {0: "abcdef", 1: "bc", 2: "abdeg", 3: "abcdg", 4: "bcfg", 5: "acdfg", 6: "acdefg", 7: "abc", 8: "abcdefg", 9: "abcdfg"}
+
+
+def visible(obj, fn, loop):
+    """Show/hide an object over the loop with scale 1 / ~0 (glTF can't animate visibility)."""
+    sampled(obj, lambda t: {"scale": 1.0 if fn(t) else 0.0001}, loop, 1)
+
+
+def seven_segment(col, name, parent, x, y, z, digit_at, loop, scale=1.0):
+    """One digit whose value over time is digit_at(t) (0…9)."""
+    for segment, (sx, sy, sw, sh) in SEGMENTS.items():
+        part = Part(f"{name}_{segment}", col)
+        part.box(sw * scale, sh * scale, 0.004, 0, -sh * scale / 2, 0, "lens")
+        obj = place(part.build(), x + sx * scale, y + sy * scale, z, parent)
+        visible(obj, lambda t, segment=segment: segment in DIGITS[digit_at(t)], loop)
+
+
 def item_tagrun(col):
-    """TagRun: a running shoe that bobs heel-to-toe."""
-    shoe = Part("tagrun_shoe", col)
-    shoe.box(0.36, 0.05, 0.14, 0, 0, 0, "black", bevel=0.01)
-    shoe.box(0.24, 0.12, 0.13, -0.04, 0.05, 0, "accent", bevel=0.02)
-    shoe.box(0.12, 0.07, 0.13, 0.12, 0.05, 0, "accent", rot=(0, 0, -0.35), bevel=0.02)
-    shoe.box(0.05, 0.1, 0.12, -0.15, 0.14, 0, "black")
-    for i in range(3):
-        shoe.box(0.015, 0.012, 0.1, 0.0 + i * 0.045, 0.172, 0, "paper")
-    obj = place(shoe.build(), 0, 0.02, 0)
-    sampled(obj, lambda t: {
-        "loc": (0, 0.02 + 0.07 * abs(wave(t, 2)), 0),
-        "rot": (0, 0, 0.22 * wave(t, 2)),
-    })
+    """TagRun: a free runner doing a timed parkour run along the counter. He slaps the start
+    button, obstacles rise out of the counter, he runs over them and the things already on the
+    counter (bell, napkin holder, sauce bottles), backflips at the end, runs back and slaps the
+    button again: the clock stops and the obstacles sink away. Positions are relative to the
+    serving tray, in metres: this item is shown at its real size and does not turn."""
+    loop = 192  # 8 seconds
+    ground = 0.02
+    lane = 0.08  # the obstacles stand a little towards the front of the counter
+    right, left = 0.4, -2.7  # the backflip at the left end stays clear of the wall and the bottles
+    button_x, clock_x = 0.58, 0.58  # inside the container's corner post
+    start_t, stop_t = 0.03, 0.955  # the clock runs between the two button presses
+
+    # Obstacles: (x, half width, height). The first three rise out of the counter for the run.
+    popups = [(-0.4, 0.04, 0.09), (-0.73, 0.02, 0.16), (-1.05, 0.05, 0.1)]
+    fixed = [(-1.40, 0.07, 0.06), (-1.70, 0.09, 0.13), (-2.08, 0.17, 0.27)]  # bell, napkins, bottles
+    obstacles = popups + fixed
+
+    def rise(t):
+        """How far the pop-up obstacles are out of the counter (0…1)."""
+        if t < start_t + 0.005:
+            return 0.0001
+        if t < start_t + 0.04:
+            return max(0.0001, (t - start_t - 0.005) / 0.035)
+        if t < stop_t + 0.005:
+            return 1.0
+        if t < stop_t + 0.035:
+            return max(0.0001, 1 - (t - stop_t - 0.005) / 0.03)
+        return 0.0001
+
+    for index, (ox, half, height) in enumerate(popups):
+        part = Part(f"tagrun_popup_{index}", col)
+        if index == 2:  # a hurdle: two posts and a bar
+            for dz in (-0.07, 0.07):
+                part.box(0.012, height, 0.012, 0, 0, dz, "paper")
+            part.box(0.012, 0.015, 0.16, 0, height - 0.015, 0, "accent")
+        else:  # a block and a wall, with a red top edge
+            part.box(half * 2, height - 0.012, 0.14, 0, 0, 0, "paper", bevel=0.003)
+            part.box(half * 2, 0.012, 0.14, 0, height - 0.012, 0, "accent")
+        obj = place(part.build(), ox, ground, lane)
+        for frame in range(1, loop + 2):
+            t = (frame - 1) / loop
+            obj.scale = (1, rise(t), 1)
+            obj.keyframe_insert("scale", frame=frame)
+
+    # The start/stop button and the clock, at the start line
+    stand = Part("tagrun_button_stand", col)
+    stand.cylinder(0.025, 0.07, 0, 0, 0, "black", segments=10)
+    stand.cylinder(0.034, 0.012, 0, 0.07, 0, "steel", segments=12)
+    place(stand.build(), button_x, ground, lane)
+    cap_part = Part("tagrun_button", col)
+    cap_part.cylinder(0.03, 0.02, 0, 0, 0, "accent", segments=14, radius_top=0.024)
+    cap = place(cap_part.build(), button_x, ground + 0.082, lane)
+
+    def pressed(t):
+        return abs(t - (start_t - 0.008)) < 0.008 or abs(t - (stop_t - 0.008)) < 0.008
+
+    sampled(cap, lambda t: {"loc": (button_x, ground + 0.082 - (0.01 if pressed(t) else 0.0), lane)}, loop, 1)
+
+    clock = Part("tagrun_clock", col)
+    clock.box(0.014, 0.17, 0.014, 0, 0, 0, "black")  # pole
+    clock.box(0.18, 0.1, 0.035, 0, 0.17, 0, "steel", bevel=0.005)  # housing
+    clock.box(0.164, 0.084, 0.004, 0, 0.178, 0.018, "black")  # display
+    clock.box(0.008, 0.008, 0.004, 0.006, 0.19, 0.021, "lens")  # decimal point
+    clock_obj = place(clock.build(), clock_x, ground, lane - 0.12)
+
+    def elapsed(t):
+        return max(0.0, min(t, stop_t) - start_t) * loop / 24  # seconds
+
+    seven_segment(col, "tagrun_clock_units", clock_obj, -0.03, 0.22, 0.021, lambda t: int(elapsed(t)) % 10, loop, 1.4)
+    seven_segment(col, "tagrun_clock_tenths", clock_obj, 0.042, 0.22, 0.021, lambda t: int(elapsed(t) * 10) % 10, loop, 1.4)
+
+    # --- The rig: root (position, turning) → body (lean, flips) → pelvis → limbs --------------
+    root = place(bpy.data.objects.new("runner_root", None), 0, 0, 0)
+    col.objects.link(root)
+    # The body pivots around its middle (hip height), so flips and leaning turn around the centre
+    # of the runner instead of around his feet.
+    size = 1.35  # the runner's size (about 46 cm): big enough to follow from the camera
+    centre = 0.23
+    body = place(bpy.data.objects.new("runner_body", None), 0, centre, 0, root)
+    body.scale = (size, size, size)
+    col.objects.link(body)
+
+    def limb(name, parent, at, size, material):
+        part = Part(name, col)
+        w, h, d = size
+        part.box(w, h, d, 0, -h, 0, material, bevel=0.004)
+        return place(part.build(), *at, parent)
+
+    pelvis_part = Part("runner_pelvis", col)
+    pelvis_part.box(0.075, 0.05, 0.05, 0, -0.025, 0, "black", bevel=0.005)
+    pelvis = place(pelvis_part.build(), 0, 0.18 - centre / size, 0, body)
+    torso_part = Part("runner_torso", col)
+    torso_part.box(0.085, 0.11, 0.05, 0, 0.0, 0, "accent", bevel=0.008)
+    torso_part.box(0.07, 0.03, 0.055, 0, 0.1, -0.012, "accent", bevel=0.008)  # hood
+    torso = place(torso_part.build(), 0, 0.0, 0, pelvis)
+    head_part = Part("runner_head", col)
+    head_part.sphere(0.03, 0, 0.03, 0, "paper", subdivisions=2)
+    place(head_part.build(), 0, 0.12, 0, torso)
+    arms, legs = [], []
+    for side in (-1, 1):
+        upper = limb(f"runner_arm_{side}", torso, (side * 0.055, 0.1, 0), (0.022, 0.06, 0.024), "accent")
+        lower = limb(f"runner_forearm_{side}", upper, (0, -0.06, 0), (0.02, 0.055, 0.022), "paper")
+        thigh = limb(f"runner_thigh_{side}", pelvis, (side * 0.022, -0.04, 0), (0.03, 0.065, 0.032), "black")
+        shin = limb(f"runner_shin_{side}", thigh, (0, -0.065, 0), (0.026, 0.06, 0.028), "black")
+        foot_part = Part(f"runner_foot_{side}", col)
+        foot_part.box(0.028, 0.014, 0.045, 0, -0.014, 0.01, "paper", bevel=0.003)
+        place(foot_part.build(), 0, -0.06, 0, shin)
+        arms.append((side, upper, lower))
+        legs.append((side, thigh, shin))
+
+    # --- The run -----------------------------------------------------------------------------
+    def smooth(t):
+        return t * t * (3 - 2 * t)
+
+    def hop(x):
+        """Height of the jump at x and how deep in a jump the runner is (0…1); the highest wins."""
+        best = (0.0, 0.0)
+        for ox, half, height in obstacles:
+            reach = half + 0.1 + height * 0.5
+            if abs(x - ox) < reach:
+                u = (x - (ox - reach)) / (2 * reach)
+                arc = (height + 0.04) * math.sin(math.pi * u)
+                if arc > best[0]:
+                    best = (arc, math.sin(math.pi * u))
+        return best
+
+    def press_amount(t):
+        """0…1: the right hand reaching for the button around each press."""
+        return max(0.0, 1 - abs(t - (start_t - 0.008)) / 0.022, 1 - abs(t - (stop_t - 0.008)) / 0.022)
+
+    def pose(t):
+        yaw_left, yaw_right = -math.pi / 2, math.pi / 2
+        p = {"x": right, "y": ground, "yaw": yaw_right, "flip": 0.0, "lean": 0.0, "stride": 0.0, "tuck": 0.0, "run": 0.0}
+        p["lean"] = 0.35 * press_amount(t)
+        if t < 0.045:  # at the start line, slapping the button
+            pass
+        elif t < 0.075:  # turn to face the course
+            p["yaw"] = yaw_right + (yaw_left - yaw_right) * smooth((t - 0.045) / 0.03)
+        elif t < 0.45:  # run left
+            u = (t - 0.075) / 0.375
+            p["x"] = right + (left - right) * u
+            p["yaw"] = yaw_left
+            p["run"] = 1.0
+        elif t < 0.58:  # backflip at the end of the counter, turning around the middle of the body
+            u = (t - 0.45) / 0.13
+            p["x"] = left
+            p["yaw"] = yaw_left
+            p["y"] = ground + 0.28 * math.sin(math.pi * u)
+            spin = min(1.0, max(0.0, (u - 0.12) / 0.76))  # take off first, rotate in the air, then land
+            p["flip"] = -math.tau * smooth(spin)
+            p["tuck"] = math.sin(math.pi * spin)
+        elif t < 0.62:  # turn around
+            p["x"] = left
+            p["yaw"] = yaw_left + (yaw_right - yaw_left) * smooth((t - 0.58) / 0.04)
+        elif t < 0.93:  # run back to the start line
+            u = (t - 0.62) / 0.31
+            p["x"] = left + (right - left) * u
+            p["run"] = 1.0
+        # 0.93…1: back at the start line, facing the button: slap it to stop the clock
+        if p["run"]:
+            height, jump = hop(p["x"])
+            travelled = abs(p["x"] - right) if t < 0.45 else abs(p["x"] - left)
+            p["stride"] = travelled / 0.22 * math.tau  # one stride per 22 cm
+            p["y"] = ground + height + 0.01 * abs(math.sin(p["stride"])) * (1 - jump)
+            p["lean"] = 0.25 - 0.1 * jump
+            p["tuck"] = jump
+        return p
+
+    def leg_angles(p, side):
+        swing = math.sin(p["stride"] + (0 if side < 0 else math.pi)) * 0.8 * p["run"] * (1 - p["tuck"])
+        knee = (0.2 + 0.9 * max(0.0, math.sin(p["stride"] + (math.pi / 2 if side < 0 else -math.pi / 2)))) * p["run"] * (1 - p["tuck"])
+        return -swing - 1.3 * p["tuck"], knee + 1.8 * p["tuck"]
+
+    def arm_angles(t, p, side):
+        swing = math.sin(p["stride"] + (math.pi if side < 0 else 0)) * 0.7 * p["run"] * (1 - p["tuck"])
+        reach = -1.3 * press_amount(t) if side > 0 else 0.0  # the right arm goes for the button
+        return -swing - 0.9 * p["tuck"] + reach, -0.5 * p["run"] - 0.4 * p["tuck"]
+
+    step = 2
+    sampled(root, lambda t: {"loc": (pose(t)["x"], pose(t)["y"], lane), "rot": (0, pose(t)["yaw"], 0)}, loop, step)
+    sampled(body, lambda t: {"rot": (pose(t)["lean"] + pose(t)["flip"], 0, 0)}, loop, step)
+    for side, thigh, shin in legs:
+        sampled(thigh, lambda t, side=side: {"rot": (leg_angles(pose(t), side)[0], 0, 0)}, loop, step)
+        sampled(shin, lambda t, side=side: {"rot": (leg_angles(pose(t), side)[1], 0, 0)}, loop, step)
+    for side, upper, lower in arms:
+        sampled(upper, lambda t, side=side: {"rot": (arm_angles(t, pose(t), side)[0], 0, side * 0.08)}, loop, step)
+        sampled(lower, lambda t, side=side: {"rot": (arm_angles(t, pose(t), side)[1], 0, 0)}, loop, step)
+    return {"turntable": 0, "fit": 0}
 
 
 def item_xr_posture_checker(col):
@@ -528,51 +733,174 @@ def item_xr_posture_checker(col):
 
 
 def item_puzzle_roulette(col):
-    """Puzzle Roulette: a roulette wheel spinning, with a puzzle piece bobbing in the middle."""
-    stand = Part("roulette_stand", col)
-    stand.cylinder(0.2, 0.06, 0, 0, 0, "wood_dark", segments=16, radius_top=0.22)
-    place(stand.build())
-    wheel = Part("roulette_wheel", col)
-    segments = 12
-    for i in range(segments):
-        a0, a1 = i / segments * math.tau, (i + 1) / segments * math.tau
-        wedge = [(0, 0), (0.19 * math.cos(a0), 0.19 * math.sin(a0)), (0.19 * math.cos(a1), 0.19 * math.sin(a1))]
-        wheel.extruded(wedge, 0.02, 0, 0, 0, "accent" if i % 2 else "black", rot=(-math.pi / 2, 0, 0))
-    wheel.cylinder(0.03, 0.06, 0, 0, 0, "metal", segments=8)
-    obj = place(wheel.build(), 0, 0.07, 0)
-    sampled(obj, lambda t: {"rot": (0, t * math.tau, 0)}, step=4)
-    piece = Part("roulette_piece", col)
-    outline = []
-    for k in range(4):  # a square with a round knob on every side
-        cx, cy = [(0, -1), (1, 0), (0, 1), (-1, 0)][k]
-        tx, ty = -cy, cx
-        outline.append((0.05 * (cx - tx), 0.05 * (cy - ty)))
-        for j in range(5):
-            a = math.pi * j / 4
-            ox, oy = 0.05 * cx + 0.02 * cx * math.sin(a), 0.05 * cy + 0.02 * cy * math.sin(a)
-            outline.append((ox - 0.02 * tx * math.cos(a), oy - 0.02 * ty * math.cos(a)))
-    piece.extruded(outline, 0.025, 0, 0, 0, "paper")
-    obj = place(piece.build(), 0, 0.18, 0)
-    sampled(obj, lambda t: {"loc": (0, 0.18 + 0.03 * wave(t, 2), 0), "rot": (0, -t * math.tau, 0)}, step=4)
+    """Puzzle Roulette: a real-life "Keep Talking and Nobody Explodes" bomb. A case with modules:
+    the countdown timer, a wires module where a wire gets cut, the big button, Simon Says and two
+    strike lights. At the end of the loop the modules light up green: defused."""
+    loop = 192  # 8 seconds
+    tilt = -0.45  # the module face leans back so it faces the visitor at the counter
+
+    case = Part("bomb_case", col)
+    case.box(0.48, 0.3, 0.2, 0, 0, 0, "steel", bevel=0.02)
+    for x in (-0.25, 0.25):  # side handles
+        case.box(0.02, 0.05, 0.14, x, 0.17, 0, "black", bevel=0.005)
+    for ix in range(3):
+        for iy in range(2):
+            case.box(0.14, 0.12, 0.012, -0.15 + ix * 0.15, 0.03 + iy * 0.135, 0.1, "black")
+    case_obj = place(case.build(), 0, 0, 0)
+    case_obj.rotation_euler = (tilt, 0, 0)
+
+    face = bpy.data.objects.new("bomb_face", None)  # children sit on the module face
+    col.objects.link(face)
+    place(face, 0, 0.06, 0.108, case_obj)  # the module face, level with the slots in the case
+
+    def on_face(name, build, x, y, z=0.0):
+        part = Part(name, col)
+        build(part)
+        return place(part.build(), x, y, z, face)
+
+    def seconds_at(t):
+        return 9 - min(7, int(t * 8))  # 0:59 → 0:52
+
+    on_face("bomb_timer_panel", lambda p: p.box(0.12, 0.07, 0.006, 0, -0.035, 0, "black"), 0, 0.165)
+    for position, (digit_x, digit_at) in enumerate(((-0.035, lambda t: 0), (0.005, lambda t: 5), (0.04, seconds_at))):
+        seven_segment(col, f"bomb_digit{position}", face, digit_x, 0.165, 0.006, digit_at, loop)
+    for cy in (0.172, 0.158):
+        on_face(f"bomb_colon_{cy}", lambda p: p.box(0.004, 0.004, 0.004, 0, -0.002, 0, "lens"), -0.017, cy, 0.006)
+
+    # Strike lights above the timer: the first strike at 1.5 s
+    for i, x in enumerate((-0.012, 0.012)):
+        base = on_face(f"bomb_strike_base_{i}", lambda p: p.cylinder(0.007, 0.004, 0, 0, 0, "black", segments=8, rot=(math.pi / 2, 0, 0), centered=True), x, 0.205, 0.004)
+        light = on_face(f"bomb_strike_{i}", lambda p: p.cylinder(0.007, 0.005, 0, 0, 0, "lens", segments=8, rot=(math.pi / 2, 0, 0), centered=True), x, 0.205, 0.006)
+        visible(light, lambda t, i=i: i == 0 and 0.19 < t < 0.97, loop)
+
+    # Wires module (top left): five wires, the red one is cut at 4 s
+    wire_colors = ("paper", "accent", "ui_blue", "black", "ui_amber")
+    for i, material in enumerate(wire_colors):
+        y = 0.205 - i * 0.019
+        for x in (-0.205, -0.095):
+            on_face(f"bomb_wire_post_{i}_{x}", lambda p: p.box(0.008, 0.01, 0.01, 0, -0.005, 0, "steel"), x, y, 0.005)
+        if material != "accent":
+            on_face(f"bomb_wire_{i}", lambda p, m=material: p.box(0.1, 0.006, 0.006, 0, -0.003, 0, m), -0.15, y, 0.012)
+            continue
+        # the cut wire: two halves hinged at their posts, swinging down when cut
+        for half, (hx, direction) in enumerate(((-0.205, 1), (-0.095, -1))):
+            obj = on_face(f"bomb_wire_cut_{half}", lambda p, d=direction: p.box(0.05, 0.006, 0.006, d * 0.025, -0.003, 0, "accent"), hx, y, 0.012)
+            sampled(obj, lambda t, d=direction: {"rot": (0, 0, -d * 0.9 * min(1.0, max(0.0, (t - 0.5) / 0.04)) if t < 0.97 else 0.0)}, loop, 1)
+    wires_led = on_face("bomb_wires_led", lambda p: p.sphere(0.008, 0, 0, 0, "ui_green", subdivisions=1), -0.088, 0.215, 0.006)
+    visible(wires_led, lambda t: 0.52 < t < 0.97, loop)
+
+    # Button module (top right): a big red button, pressed at 2.5 s, with a strip that lights up
+    on_face("bomb_button_ring", lambda p: p.cylinder(0.042, 0.008, 0, 0, 0, "black", segments=16, rot=(math.pi / 2, 0, 0), centered=True), 0.15, 0.175, 0.004)
+    button = on_face("bomb_button", lambda p: p.cylinder(0.035, 0.018, 0, 0, 0.009, "accent", segments=16, rot=(math.pi / 2, 0, 0), centered=True), 0.15, 0.175, 0.006)
+    sampled(button, lambda t: {"loc": (0.15, 0.175, 0.006 - (0.008 if 0.3 < t < 0.36 else 0.0))}, loop, 1)
+    strip = on_face("bomb_button_strip", lambda p: p.box(0.012, 0.05, 0.006, 0, -0.025, 0, "ui_blue"), 0.21, 0.17, 0.006)
+    visible(strip, lambda t: 0.3 < t < 0.97, loop)
+
+    # Simon Says (bottom middle): four coloured pads flashing a sequence
+    pads = [("accent", -0.022, 0.022), ("ui_blue", 0.022, 0.022), ("ui_green", -0.022, -0.022), ("ui_amber", 0.022, -0.022)]
+    sequence = [0, 2, 1, 3, 0, 1]
+    for index, (material, px, py) in enumerate(pads):
+        on_face(f"bomb_pad_{index}", lambda p: p.box(0.036, 0.036, 0.006, 0, -0.018, 0, "black"), px, 0.03 + py, 0.004)
+        flash = on_face(f"bomb_pad_light_{index}", lambda p, m=material: p.box(0.032, 0.032, 0.006, 0, -0.016, 0, m), px, 0.03 + py, 0.007)
+        visible(flash, lambda t, index=index: sequence[int(t * 12) % len(sequence)] == index and (t * 12) % 1 < 0.6, loop)
+
+    # Keypad (bottom left) and a spare module with a green light (bottom right)
+    for kx in (-0.17, -0.13):
+        for ky in (0.05, 0.01):
+            on_face(f"bomb_key_{kx}_{ky}", lambda p: p.box(0.03, 0.03, 0.012, 0, -0.015, 0, "paper", bevel=0.003), kx, ky, 0.005)
+    done = on_face("bomb_done_led", lambda p: p.sphere(0.01, 0, 0, 0, "ui_green", subdivisions=1), 0.15, 0.03, 0.008)
+    visible(done, lambda t: 0.8 < t < 0.97, loop)
+    return {"turntable": 0, "fit": 1}
 
 
 def item_kitchenapp(col):
-    """KitchenApp: a pan that flips a pancake."""
-    pan = Part("kitchen_pan", col)
-    pan.cylinder(0.13, 0.03, 0, 0, 0, "black", segments=14, radius_top=0.15)
-    pan.box(0.2, 0.02, 0.03, 0.23, 0.02, 0, "wood_dark")
-    obj = place(pan.build(), -0.03, 0.02, 0)
-    sampled(obj, lambda t: {"rot": (0, 0, 0.18 * max(0.0, wave(t)) if t < 0.5 else 0)})
-    cake = Part("kitchen_pancake", col)
-    cake.cylinder(0.1, 0.018, 0, -0.009, 0, "wood", segments=12)
-    obj = place(cake.build(), -0.03, 0.05, 0)
+    """KitchenApp: a stock-management program on a monitor. A grid of products with stock bars
+    that go up and down, a selection that moves over the products, and a new product appearing."""
+    loop = 192  # 8 seconds
+    monitor = Part("stock_monitor", col)
+    monitor.box(0.14, 0.012, 0.1, 0, 0, 0, "black", bevel=0.004)  # foot
+    monitor.box(0.03, 0.14, 0.02, 0, 0.012, -0.02, "black")  # neck
+    monitor.box(0.56, 0.35, 0.025, 0, 0.13, 0, "black", bevel=0.006)  # bezel
+    monitor.box(0.53, 0.32, 0.004, 0, 0.145, 0.013, "screen")
+    monitor.box(0.53, 0.032, 0.004, 0, 0.433, 0.0145, "lens")  # header bar of the app
+    monitor.box(0.09, 0.27, 0.004, -0.22, 0.155, 0.0145, "ui_tile")  # side menu
+    for i in range(5):
+        monitor.box(0.06, 0.012, 0.004, -0.22, 0.39 - i * 0.045, 0.016, "black")
+    screen = place(monitor.build(), 0, 0, 0)
 
-    def flip(t):
-        jump = max(0.0, math.sin(min(t / 0.6, 1.0) * math.pi))  # up and down during the first 60 %
-        turn = min(t / 0.6, 1.0) * math.pi
-        return {"loc": (-0.03, 0.05 + 0.25 * jump, 0), "rot": (turn, 0, 0)}
+    face = bpy.data.objects.new("stock_face", None)
+    col.objects.link(face)
+    place(face, 0, 0, 0.018, screen)
 
-    sampled(obj, flip, step=2)
+    # Product cards in a 4 × 3 grid; each has an "icon" and a stock bar
+    icons = ("ui_amber", "ui_green", "accent", "ui_blue")
+    # The app area of the screen: right of the side menu, below the header bar
+    columns, rows, gap = 4, 3, 0.01
+    area_left, area_right, area_top, area_bottom = -0.165, 0.255, 0.422, 0.158
+    card_w = (area_right - area_left - gap * (columns - 1)) / columns
+    card_h = (area_top - area_bottom - gap * (rows - 1)) / rows
+
+    def card_pos(index):
+        """Centre x and top y of a card."""
+        return area_left + card_w / 2 + (index % columns) * (card_w + gap), area_top - (index // columns) * (card_h + gap)
+
+    levels = [0.8, 0.35, 0.6, 0.15, 0.9, 0.5, 0.7, 0.25, 0.45, 0.85, 0.3, 0.6]
+    for index in range(columns * rows):
+        cx, cy = card_pos(index)
+        card = Part(f"stock_card_{index}", col)
+        card.box(card_w, card_h, 0.003, 0, -card_h, 0, "ui_tile")
+        material = icons[index % len(icons)]
+        if index % 3 == 0:
+            card.cylinder(0.014, 0.004, 0, -0.032, 0.002, material, segments=10, rot=(math.pi / 2, 0, 0), centered=True)
+        elif index % 3 == 1:
+            card.box(0.024, 0.024, 0.004, 0, -0.044, 0.002, material)
+        else:
+            card.extruded([(-0.014, -0.046), (0.014, -0.046), (0, -0.02)], 0.004, 0, 0, 0.002, material)
+        card.box(card_w - 0.02, 0.008, 0.003, 0, -card_h + 0.01, 0.002, "black")  # empty stock bar
+        obj = place(card.build(), cx, cy, 0.0, face)
+        if index == columns * rows - 1:  # the newest product pops in halfway and leaves at the end
+            sampled(obj, lambda t: {"scale": 0.0001 if t < 0.5 or t > 0.97 else min(1.0, (t - 0.5) / 0.04)}, loop, 1)
+        # Stock bar: a fill that changes over time (sold, restocked); red when almost empty
+        bar = Part(f"stock_bar_{index}", col)
+        low = levels[index] < 0.3
+        bar_w = card_w - 0.02
+        bar.box(bar_w, 0.008, 0.004, bar_w / 2, -0.004, 0, "accent" if low else "ui_green")
+        bar_obj = place(bar.build(), cx - bar_w / 2, cy - card_h + 0.014, 0.004, face)
+        base = levels[index]
+
+        def fill(t, base=base, index=index):
+            if index == columns * rows - 1 and (t < 0.5 or t > 0.97):
+                return 0.0001
+            wave = 0.18 * math.sin(t * math.tau * (1 + index % 3) + index)
+            restock = 0.4 if index == 3 and 0.62 < t < 0.97 else 0.0  # the empty one gets restocked
+            return max(0.05, min(1.0, base + wave + restock))
+
+        for frame in range(1, loop + 2, 4):
+            t = (frame - 1) / loop
+            bar_obj.scale = (fill(t), 1, 1)
+            bar_obj.keyframe_insert("scale", frame=frame)
+        bar_obj.scale = (fill(1.0), 1, 1)
+        bar_obj.keyframe_insert("scale", frame=loop + 1)
+
+    # Selection frame hopping from product to product
+    select = Part("stock_select", col)
+    t_ = 0.004
+    for sx, sy, sw, sh in ((0, 0, card_w + 0.01, t_), (0, -card_h - 0.01, card_w + 0.01, t_),
+                           (-(card_w + 0.01) / 2, -(card_h + 0.01) / 2, t_, card_h + 0.01), ((card_w + 0.01) / 2, -(card_h + 0.01) / 2, t_, card_h + 0.01)):
+        select.box(sw, sh, 0.004, sx, sy + 0.005 - sh / 2, 0, "lens")
+    select_obj = place(select.build(), *card_pos(0), 0.006, face)
+    stops = [0, 5, 3, 10, 6, 1, 11, 0]
+
+    def selection(t):
+        position = t * (len(stops) - 1)
+        i = min(int(position), len(stops) - 2)
+        u = min(1.0, (position - i) / 0.25)  # jump quickly, then rest
+        a, b = card_pos(stops[i]), card_pos(stops[i + 1])
+        u = u * u * (3 - 2 * u)
+        return {"loc": (a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u, 0.006)}
+
+    sampled(select_obj, selection, loop, 2)
+    return {"turntable": 0, "fit": 1}
 
 
 def item_post_it_machine(col):
@@ -597,6 +925,7 @@ def item_post_it_machine(col):
 
     sampled(obj, out, step=2)
     key(obj, LOOP + 1, loc=(0, 0.126, 0.03), rot=(0, 0, 0), scale=1.0)
+    return {"scale": 0.6}
 
 
 ITEM_BUILDERS = {
@@ -611,11 +940,23 @@ ITEM_BUILDERS = {
 def build_items():
     scene = bpy.context.scene
     scene.render.fps = FPS
-    scene.frame_start, scene.frame_end = 1, LOOP + 1
+    scene.frame_start, scene.frame_end = 1, 193
     # Keys are sampled densely, so straight lines between them keep loops and spins even
     bpy.context.preferences.edit.keyframe_new_interpolation_type = "LINEAR"
     for slug, build in ITEM_BUILDERS.items():
-        build(new_collection(f"item_{slug}"))
+        col = new_collection(f"item_{slug}")
+        settings = build(col) or {}
+        # A root holding the item's settings for the site (exported as glTF "extras"):
+        # turntable = slowly turn on the tray, fit = scale to fit the tray. Edit them in Blender
+        # (Object properties → Custom Properties on item_root) if you change an item.
+        top_level = [obj for obj in col.objects if obj.parent is None]
+        root = bpy.data.objects.new(f"item_root_{slug}", None)
+        col.objects.link(root)
+        root["turntable"] = settings.get("turntable", 1)
+        root["fit"] = settings.get("fit", 1)
+        root["scale"] = settings.get("scale", 1.0)  # size on the tray, after fitting (1 = as large as fits)
+        for obj in top_level:
+            obj.parent = root
     scene.frame_set(1)
 
 

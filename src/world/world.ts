@@ -247,7 +247,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
 
   // Project items on the counters. They only animate while their booth is open (and never with
   // reduced motion), so the world keeps rendering on demand the rest of the time.
-  type ShownItem = { path: string; root: Object3D | null; mixer: AnimationMixer | null };
+  type ShownItem = { path: string; root: Object3D | null; mixer: AnimationMixer | null; turntable: boolean };
   const items = new Map<PlaceId, ShownItem>();
   let lastTime = performance.now();
 
@@ -262,20 +262,23 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     items.delete(id);
     invalidate();
     if (!path) return;
-    const shown: ShownItem = { path, root: null, mixer: null };
+    const shown: ShownItem = { path, root: null, mixer: null, turntable: false };
     items.set(id, shown);
     loadItem(path)
-      .then(({ scene: model, clips }) => {
+      .then(({ scene: model, clips, turntable, fit: fitToTray, scale }) => {
         if (disposed || items.get(id) !== shown) return;
         const root = new Object3D();
         root.position.copy(spot);
         root.add(model);
-        // Fit any model on the tray, whatever size it was made at in Blender (its rest pose).
-        const bounds = new Box3().setFromObject(model);
-        const extent = bounds.getSize(new Vector3());
-        const fit = Math.min(ITEM_FIT.width / Math.max(extent.x, extent.z), ITEM_FIT.height / extent.y);
-        model.scale.setScalar(Number.isFinite(fit) ? fit : 1);
-        model.position.y = -bounds.min.y * model.scale.y;
+        if (fitToTray) {
+          // Fit the model on the tray, whatever size it was made at in Blender (its rest pose).
+          const bounds = new Box3().setFromObject(model);
+          const extent = bounds.getSize(new Vector3());
+          const fit = Math.min(ITEM_FIT.width / Math.max(extent.x, extent.z), ITEM_FIT.height / extent.y);
+          model.scale.setScalar((Number.isFinite(fit) ? fit : 1) * scale);
+          model.position.y = -bounds.min.y * model.scale.y;
+        }
+        shown.turntable = turntable;
         objects.get(id)!.group.add(root);
         shown.root = root;
         if (!reducedMotion && clips.length) {
@@ -291,7 +294,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     const shown = items.get(currentPlace);
     if (reducedMotion || !shown?.root) return false;
     shown.mixer?.update(seconds);
-    shown.root.rotation.y += seconds * TURNTABLE_SPEED;
+    if (shown.turntable) shown.root.rotation.y += seconds * TURNTABLE_SPEED;
     return true;
   }
 

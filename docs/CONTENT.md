@@ -152,9 +152,14 @@ The boards inside the booths fill themselves: the Projects menu lists your proje
 
 Every project can have a small animated model that stands on the counter of its booth — the "dish" of the Projects menu, or what's on tap at the Lab. The counter shows the open project's model, or else the first project of that booth that has one.
 
-1. In `festival.blend`, each item is a collection `item_<slug>` (e.g. `item_tagrun`). The current ones are placeholders based only on the project names; replace them with whatever fits the project.
-2. Animate with keyframes on the objects (location, rotation, scale) between frame 1 and 49, and make the last keyframe equal to the first so the loop is seamless. Parent parts to each other for chains (see `item_xr-posture-checker`).
-3. Any size works: the site scales the model to fit the tray (about 0.6 m wide, 0.5 m tall). It also turns slowly on the tray, and it stands still for visitors who prefer reduced motion.
+1. In `festival.blend`, each item is a collection `item_<slug>` (e.g. `item_tagrun`). TagRun (a free runner), KitchenApp (a stock screen) and Puzzle Roulette (a "Keep Talking and Nobody Explodes" bomb) follow the projects; XR Posture Checker and Post-It Machine are still placeholders based on their names.
+2. Animate with keyframes on the objects (location, rotation, scale). Pick one loop length per item (the current ones use 49 or 193 frames at 24 fps) and key **every** animated object at the first and the last frame, with the last key equal to the first, so the loop is seamless and all parts stay in sync. Parent parts to each other for chains (the runner in `item_tagrun`, the spine in `item_xr-posture-checker`). To hide something for a while, key its scale to (almost) 0.
+3. Each item has an `item_root_<slug>` object with three custom properties (Object properties → Custom Properties):
+   - `fit` = 1: the site scales the model to fit the tray (about 0.6 m wide, 0.5 m tall). 0: shown at its real size, in metres from the centre of the tray — the TagRun runner uses this to run along the whole counter.
+   - `turntable` = 1: it turns slowly on the tray. 0: it stays facing the visitor.
+   - `scale`: size on the tray after fitting, e.g. 0.6 for the smaller Post-It Machine (1 = as large as fits).
+
+   Every item stands still for visitors who prefer reduced motion.
 4. Run `export_models.py`; items are written to `public/models/items/<slug>.glb`.
 5. Link it in `projects.json`: `"model": "models/items/<slug>.glb"`. Remove the field to show no model.
 
