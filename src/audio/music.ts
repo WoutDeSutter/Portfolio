@@ -1,5 +1,6 @@
 import { tracks } from '../content/content';
 import type { Track } from '../content/types';
+import { assetUrl } from '../utils/assetUrl';
 
 /**
  * The FOH music: one audio element, played through Web Audio so the 3D world can route it to
@@ -90,7 +91,7 @@ export function play(track: Track) {
   ensureGraph();
   void context!.resume();
   if (state.track?.id !== track.id) {
-    audio!.src = `${import.meta.env.BASE_URL}${track.file}`;
+    audio!.src = assetUrl(track.file);
     setState({ track });
   }
   audio!.play().catch((error: unknown) => {

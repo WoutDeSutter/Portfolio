@@ -88,7 +88,7 @@ The chosen direction is a **fully 3D, interactive festival terrain at night**. W
 
 Layout (seen from the entrance):
 
-- **Entrance** (front) — arrival point; the camera starts here with an overview of the whole terrain. Name and role on the entrance arch.
+- **Entrance** (front) — arrival point (a truss arch without a banner); the camera starts here with an overview of the whole terrain.
 - **Main stage** (back, centre) — **About me**. Truss, LED wall with Wout's name and role, stage lighting in red.
 - **Audience field** between entrance and stage.
 - **FOH tent** (centre of the field) — the front-of-house mix position Wout often works from in real life. An **easter egg**: from the desk the visitor chooses, starts and stops music on the speakers and controls the stage lights.
@@ -147,7 +147,7 @@ There is no conventional homepage: the first view is the festival terrain from t
 
 Within the first seconds the visitor must understand:
 
-1. Wout De Sutter — XR Student MCT (on the entrance arch / LED wall)
+1. Wout De Sutter — XR Student MCT (on the LED wall of the main stage)
 2. that the booths and the stage can be explored (signs, hover, a subtle hint)
 
 The exact copy will be written later. No walls of text in the world; text lives in the panels.

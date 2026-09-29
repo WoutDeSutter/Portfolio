@@ -157,14 +157,10 @@ export function createFoh(materials: GreyboxMaterials): PlaceObject {
   return withVisual({ group, hitArea, focus: new Vector3(0.35, 1.7, -0.6) });
 }
 
-/** Entrance arch with a banner (name and role), facing the arriving visitor. */
-export function createEntrance(materials: GreyboxMaterials, colors: WorldColors): PlaceObject {
+/** Entrance arch over the path, facing the arriving visitor. */
+export function createEntrance(materials: GreyboxMaterials): PlaceObject {
   const group = new Group();
   for (const x of [-5.6, 5.6]) group.add(box(1, 5.2, 1, materials.body, x, 0, 0));
-
-  const sign = new Sign(10.2, 1.5, colors);
-  sign.mesh.position.set(0, 4.4, 0.52);
-  group.add(sign.mesh);
-
-  return withVisual({ group, sign, focus: new Vector3() });
+  group.add(box(12.2, 0.5, 0.5, materials.body, 0, 5.2, 0));
+  return withVisual({ group, focus: new Vector3() });
 }

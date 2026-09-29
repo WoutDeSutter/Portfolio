@@ -164,7 +164,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       case 'foh':
         return createFoh(materials);
       case 'entrance':
-        return createEntrance(materials, colors);
+        return createEntrance(materials);
       default: {
         const booth = createBooth(materials, colors);
         const light = new PointLight(0xffc98a, 6, 7);
@@ -206,7 +206,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
   // Labels
   function applyLabels(labels: WorldLabels) {
     for (const [id, object] of objects) {
-      if (id === 'entrance' || id === 'about') object.sign?.setText(labels.name, labels.role);
+      if (id === 'about') object.sign?.setText(labels.name, labels.role);
       else object.sign?.setText(labels.places[id]);
     }
     for (const [id, board] of boards) board.setContent(labels.boards[id] ?? { title: labels.places[id] });
