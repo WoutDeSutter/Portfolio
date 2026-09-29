@@ -23,6 +23,7 @@ MODELS = (
     "foh",
     "entrance",
     "terrain",
+    "crowd",
 )
 
 

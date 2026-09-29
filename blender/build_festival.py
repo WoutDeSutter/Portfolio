@@ -54,6 +54,7 @@ MATERIALS = {
     "grass": ((0.018, 0.028, 0.02), 1.0, 0.0, None, 0),
     "trackway": ((0.026, 0.028, 0.031), 0.9, 0.0, None, 0),
     "pine": ((0.01, 0.022, 0.015), 0.95, 0.0, None, 0),
+    "crowd": ((0.03, 0.032, 0.042), 0.9, 0.0, None, 0),
     "wood_dark": ((0.10, 0.065, 0.04), 0.9, 0.0, None, 0),
     "metal": ((0.40, 0.41, 0.43), 0.45, 0.85, None, 0),
     "black": ((0.025, 0.025, 0.028), 0.7, 0.0, None, 0),
@@ -655,24 +656,73 @@ def build_stage():
     frame.build()
 
     pa = Part("stage_pa", col)
+    # Line arrays on "PA wings": a short truss out from each front corner, a bumper on two chain
+    # hoists, and eight wedge-shaped cabinets hinged at their front edges. Each cabinet tilts a
+    # little more than the one above, so the front is convex (the "banana"): the top cabinets throw
+    # to the back of the field, the bottom ones down to the front rows. Arrays are toed in slightly.
+    cabinet_h, cabinet_d, width = 0.36, 0.62, 0.95
+    splays = [1.0, 1.0, 1.5, 2.0, 3.0, 4.5, 6.0, 8.0]  # degrees between neighbouring cabinets
+    toe = 0.14  # radians towards the middle of the field
     for side in (-1, 1):
-        x = side * 9.2
-        # Hanging bumper, suspended from the top truss
-        pa.box(1.0, 0.1, 0.8, x, 7.35, 3.6, "metal")
-        pa.beam((x, 7.45, 3.6), (side * 7.6, top, 3.6), 0.02, "black")
-        # Line array: eight cabinets curving towards the audience (a "J" shape)
-        y, z, tilt = 7.35, 3.6, 0.0
-        for i in range(8):
-            tilt += math.radians(1.2 + i * 1.4)
-            y -= 0.37 * math.cos(tilt)
-            z += 0.37 * math.sin(tilt) * 0.5
-            pa.box(0.95, 0.35, 0.62, x, y, z, "black", rot=(tilt, 0, 0), centered=True, bevel=0.015)
-            pa.box(0.8, 0.22, 0.02, x, y, z + 0.31 * math.cos(tilt), "deck", rot=(tilt, 0, 0), centered=True)
+        x, front = side * 8.9, 3.6 + cabinet_d / 2
+        theta = -side * toe
+        rot_array = (0, -math.pi / 2 + theta, 0)  # outline (u forward, v up) → the side plane of the array
+        # PA wing: truss from the stage corner block out to a new corner block above the array
+        inner, outer = side * 7.6, side * 10.2
+        truss_span(pa, (min(inner, outer), top, 3.6), (max(inner, outer), top, 3.6), "x")
+        truss_node(pa, (outer, top, 3.6))
+        bumper_y = 8.35
+        pa.box(1.1, 0.1, 0.8, x, bumper_y, 3.6, "steel", rot=(0, theta, 0))
+        for dx in (-0.35, 0.35):
+            hx = x + dx * math.cos(theta)
+            pa.box(0.22, 0.26, 0.22, hx, bumper_y + 0.12, 3.6, "black")  # chain hoist
+            pa.beam((hx, bumper_y + 0.38, 3.6), (hx, top - 0.2, 3.6), 0.025, "black", round_=True, segments=4, caps=False)
+        # Hinge chain in the side plane: u = forward from the array's front line, v = height
+        hinge_u, hinge_v, angle = 0.0, bumper_y - 0.05, math.radians(2.0)
+        for i, splay in enumerate(splays):
+            if i:
+                angle += math.radians(splay)
+            down = (-math.sin(angle), -math.cos(angle))  # along the front face, top → bottom (u, v)
+            back = (-math.cos(angle), math.sin(angle))   # from the face into the cabinet
+            top_front = (hinge_u, hinge_v)
+            bottom_front = (hinge_u + down[0] * cabinet_h, hinge_v + down[1] * cabinet_h)
+            taper = 0.05  # the back of the cabinet is a little lower than the front: a wedge
+            top_back = (top_front[0] + back[0] * cabinet_d + down[0] * taper / 2, top_front[1] + back[1] * cabinet_d + down[1] * taper / 2)
+            bottom_back = (bottom_front[0] + back[0] * cabinet_d - down[0] * taper / 2, bottom_front[1] + back[1] * cabinet_d - down[1] * taper / 2)
+            outline = [bottom_front, top_front, top_back, bottom_back]
+            pa.extruded(outline, width, x, 0, front, "black", rot=rot_array)
+            # Grille: a slightly smaller panel just in front of the face
+            inset, proud = 0.03, 0.012
+            grille = [
+                (bottom_front[0] - back[0] * proud - down[0] * inset, bottom_front[1] - back[1] * proud - down[1] * inset),
+                (top_front[0] - back[0] * proud + down[0] * inset, top_front[1] - back[1] * proud + down[1] * inset),
+                (top_front[0] + down[0] * inset, top_front[1] + down[1] * inset),
+                (bottom_front[0] - down[0] * inset, bottom_front[1] - down[1] * inset),
+            ]
+            pa.extruded(grille, width - 0.08, x, 0, front, "deck", rot=rot_array)
+            hinge_u, hinge_v = bottom_front
     # Subwoofers on the ground in front of the stage
     for x in (-5.5, -4.4, 4.4, 5.5):
         pa.box(1.05, 0.75, 0.9, x, 0, 4.7, "black", bevel=0.02)
         pa.box(0.85, 0.55, 0.02, x, 0.1, 5.16, "deck")
     pa.build()
+
+    screens = Part("stage_screens", col)
+    # Side screens (IMAG) left and right of the stage, turned towards the field. The picture is
+    # drawn by the site (src/world/stageScreens.ts, SIDE_SCREENS); these are the frames and stands.
+    for side in (-1, 1):
+        cx, cz, turn = side * 11.55, 2.6, -side * 0.12
+        ux, uz = math.cos(turn), -math.sin(turn)  # along the screen (three.js: +x rotated by turn)
+        screens.box(4.0, 2.4, 0.16, cx, 5.4, cz, "black", rot=(0, turn, 0), centered=True, bevel=0.02)
+        for edge in (-1, 1):
+            lx, lz = cx + ux * edge * 1.85, cz + uz * edge * 1.85
+            bx, bz = lx - math.sin(turn) * -0.3, lz - math.cos(turn) * 0.3
+            truss(screens, (bx, 0.05, bz), "y", 6.85, size=0.3)
+            screens.box(0.9, 0.05, 0.9, bx, 0, bz, "steel", rot=(0, turn, 0))
+            screens.box(0.7, 0.3, 0.7, bx, 0.05, bz, "black", rot=(0, turn, 0), bevel=0.02)
+        screens.beam((cx - ux * 1.85 - math.sin(turn) * -0.3, 6.95, cz - uz * 1.85 - math.cos(turn) * 0.3),
+                     (cx + ux * 1.85 - math.sin(turn) * -0.3, 6.95, cz + uz * 1.85 - math.cos(turn) * 0.3), 0.3, "metal")
+    screens.build()
 
     lights = Part("stage_lights", col)
     # Moving heads hanging under the front and back truss
@@ -967,6 +1017,39 @@ def build_terrain():
     build_picnic(col)
 
 
+# --- Crowd -----------------------------------------------------------------------------------
+# Three kinds of festival-goer, each one object standing at the origin, facing +z (three.js).
+# The site places a small audience in front of the stage with instancing (src/world/crowd.ts),
+# and lets it move with the music.
+
+
+def person(col, name, arms):
+    part = Part(name, col)
+    for x in (-0.09, 0.09):
+        part.box(0.13, 0.86, 0.15, x, 0, 0, "crowd")
+    part.box(0.4, 0.6, 0.22, 0, 0.84, 0, "crowd", bevel=0.03)
+    part.cylinder(0.05, 0.1, 0, 1.43, 0, "crowd", segments=6)
+    part.sphere(0.11, 0, 1.62, 0, "crowd", subdivisions=2)
+    for side, pose in zip((-1, 1), arms):
+        shoulder = (side * 0.25, 1.36, 0)
+        if pose == "down":
+            part.box(0.1, 0.6, 0.11, side * 0.26, 0.8, 0.0, "crowd", rot=(0, 0, side * 0.08))
+        elif pose == "up":
+            part.beam(shoulder, (side * 0.42, 2.02, 0.08), 0.1, "crowd")
+        elif pose == "phone":
+            part.beam(shoulder, (side * 0.2, 1.95, 0.2), 0.1, "crowd")
+            part.box(0.08, 0.14, 0.015, side * 0.18, 1.96, 0.24, "black", rot=(-0.3, 0, 0))
+    obj = part.build()
+    return obj
+
+
+def build_crowd():
+    col = new_collection("crowd")
+    person(col, "person_relaxed", ("down", "down"))
+    person(col, "person_hands_up", ("up", "up"))
+    person(col, "person_phone", ("down", "phone"))
+
+
 def build_entrance():
     """Entrance arch: two truss towers, a truss beam and a banner frame (sign 10.2 × 1.5 at y 4.4, z 0.52)."""
     col = new_collection("entrance")
@@ -1017,6 +1100,7 @@ def main():
     build_foh()
     build_entrance()
     build_terrain()
+    build_crowd()
     build_items()
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)
     print(f"Saved {BLEND_PATH}")

@@ -122,13 +122,13 @@ export function createStage(materials: GreyboxMaterials, colors: WorldColors): P
   for (const z of [-3.6, 3.6]) group.add(box(15.7, 0.5, 0.5, body, 0, trussHeight, z));
 
   // Line arrays hanging left and right of the stage front
-  const speakers = [new Vector3(-9.2, 5.5, 3.6), new Vector3(9.2, 5.5, 3.6)];
+  const speakers = [new Vector3(-8.9, 7, 3.6), new Vector3(8.9, 7, 3.6)];
   for (const position of speakers) group.add(box(0.9, 3, 0.9, dark, position.x, position.y - 1.5, position.z));
 
   const hitArea = hitBox(deck.width + 3, trussHeight, deck.depth, materials);
   group.add(hitArea);
 
-  return withVisual({ group, hitArea, sign, speakers, focus: new Vector3(0, 4, 0) });
+  return withVisual({ group, hitArea, sign, speakers, focus: new Vector3(0, 5, 0) });
 }
 
 /** FOH tent: a raised platform with a mixing desk facing the stage, under a small roof. */

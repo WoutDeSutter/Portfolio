@@ -27,14 +27,16 @@ import {
   createStage,
   type PlaceObject,
 } from './greybox';
-import { getLevel, setSpatializer } from '../audio/music';
+import { getLevel, getState as getMusicState, setSpatializer } from '../audio/music';
 import type { LightState } from '../festival/lights';
 import { loadItem } from './items';
 import { loadModels, loadTerrain, type ModelName, type Models } from './models';
 import { BASE_FOV, CameraRig, type View } from './rig';
 import { createFohDesk, type FohAction, type FohLabels, type FohState } from './fohDesk';
 import type { CanvasScreen, Hotspot } from './screen';
+import { loadCrowd, type Crowd } from './crowd';
 import { createStageShow } from './show';
+import { createStageScreens, type AboutLabels } from './stageScreens';
 import { createSky } from './sky';
 import { createSpeakers } from './speakers';
 import { readWorldColors } from './theme';
@@ -47,6 +49,8 @@ export type WorldLabels = {
   boards: Partial<Record<PlaceId, BoardContent>>;
   /** Tracks and texts on the FOH desk screens. */
   foh: FohLabels;
+  /** "About me" on the side screens of the stage. */
+  about: AboutLabels;
   name: string;
   role: string;
 };
@@ -193,6 +197,8 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
   const stageObject = objects.get('about')!;
   const show = createStageShow(scene, stageObject.group, reducedMotion);
   const fohDesk = createFohDesk(objects.get('foh')!.group, reducedMotion);
+  const stageScreens = createStageScreens(stageObject.group, reducedMotion, invalidate);
+  let crowd: Crowd | null = null;
   scene.updateMatrixWorld();
   const speakerPositions = (stageObject.speakers ?? []).map((position) => stageObject.group.localToWorld(position.clone()));
   setSpatializer(createSpeakers(scene, camera, speakerPositions));
@@ -205,15 +211,17 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     }
     for (const [id, board] of boards) board.setContent(labels.boards[id] ?? { title: labels.places[id] });
     fohDesk.setLabels(labels.foh);
+    stageScreens.setLabels(labels.about);
     invalidate();
   }
-  let latestLabels = options.labels.foh;
+  let latestLabels = options.labels;
   applyLabels(options.labels);
   // Signs use the web fonts; redraw once they are available.
   document.fonts?.ready.then(() => {
     for (const object of objects.values()) object.sign?.draw();
     for (const board of boards.values()) board.draw();
-    fohDesk.setLabels(latestLabels);
+    fohDesk.setLabels(latestLabels.foh);
+    stageScreens.setLabels(latestLabels.about);
     invalidate();
   });
 
@@ -226,7 +234,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     target.add(new Vector3(place.x, 0, place.z));
     // FOH: inside the tent, behind the engineer, looking over the desk towards the stage.
     // Booths: almost at eye level, so the camera looks under the awning at the board inside.
-    const phi = place.kind === 'foh' ? 1.38 : place.kind === 'stage' ? 1.3 : 1.44;
+    const phi = place.kind === 'foh' ? 1.38 : place.kind === 'stage' ? 1.2 : 1.44;
     return { target, theta: place.facing, phi, radius: place.viewDistance };
   }
 
@@ -296,7 +304,8 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
     const level = getLevel();
     const lights = show.update(seconds, level);
     const meter = fohDesk.update(level, currentPlace === 'foh');
-    if (!moved && !needsRender && !animated && !lights && !meter) return;
+    const dancing = crowd?.update(seconds, level, getMusicState().playing) ?? false;
+    if (!moved && !needsRender && !animated && !lights && !meter && !dancing) return;
     renderer.render(scene, camera);
     needsRender = false;
   }
@@ -496,6 +505,12 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
         ground.visible = false;
         invalidate();
       });
+      void loadCrowd(reducedMotion).then((loaded) => {
+        if (disposed || !loaded) return;
+        crowd = loaded;
+        scene.add(loaded.group);
+        invalidate();
+      });
       if (import.meta.env.DEV) {
         // Cost of one frame, to keep an eye on while adding models (dev only).
         const { calls, triangles } = renderer.info.render;
@@ -543,7 +558,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       rig.setFrame(right, bottom, reducedMotion);
     },
     setLabels(labels) {
-      latestLabels = labels.foh;
+      latestLabels = labels;
       applyLabels(labels);
     },
     ready,
@@ -553,6 +568,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       setSpatializer(null);
       show.dispose();
       fohDesk.dispose();
+      stageScreens.dispose();
       renderer.setAnimationLoop(null);
       for (const shown of items.values()) shown.mixer?.stopAllAction();
       resizeObserver.disconnect();

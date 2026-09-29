@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import { getProject, getProjectsByKind, site, tracks } from '../content/content';
+import { getProject, getProjectsByKind, site, skills, tracks } from '../content/content';
 import type { Project } from '../content/types';
 import { getState as getMusicState, pause, play, setVolume, stop } from '../audio/music';
 import { useMusic } from '../audio/useMusic';
@@ -120,6 +120,17 @@ export function WorldLayer({ frame, onFail }: WorldLayerProps) {
     boards: useBoards(),
     name: site.name,
     role: t('meta.role'),
+    about: {
+      name: site.name,
+      role: t('meta.role'),
+      title: t('places.about'),
+      intro: t('about.intro'),
+      technologies: t('about.skillsHeading'),
+      groups: (['xr', 'software', 'physical'] as const).map((group) => ({
+        title: t(`skills.groups.${group}`),
+        items: skills.filter((skill) => skill.group === group).map((skill) => skill.name),
+      })),
+    },
     foh: {
       tracks,
       music: t('foh.music'),
