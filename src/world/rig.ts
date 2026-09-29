@@ -93,7 +93,11 @@ export class CameraRig {
    * Returns whether anything changed, so the world only renders when needed.
    */
   update(camera: PerspectiveCamera, pointer: Vector2, width: number, height: number): boolean {
-    if (!this.reducedMotion) this.look.lerp(pointer, LOOK.smoothing);
+    if (!this.reducedMotion) {
+      this.look.lerp(pointer, LOOK.smoothing);
+      // Snap the last tiny bit, otherwise the easing never quite arrives and the world keeps rendering.
+      if (this.look.distanceToSquared(pointer) < 1e-8) this.look.copy(pointer);
+    }
 
     const target = new Vector3(this.state.tx, this.state.ty, this.state.tz);
     const visibleAspect = Math.max(width - this.frame.x * 2, 1) / Math.max(height - this.frame.y * 2, 1);

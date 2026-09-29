@@ -51,6 +51,9 @@ MATERIALS = {
     "container": ((0.07, 0.075, 0.08), 0.55, 0.35, None, 0),
     "steel": ((0.16, 0.165, 0.17), 0.5, 0.8, None, 0),
     "paper": ((0.55, 0.55, 0.52), 0.9, 0.0, None, 0),
+    "grass": ((0.018, 0.028, 0.02), 1.0, 0.0, None, 0),
+    "trackway": ((0.026, 0.028, 0.031), 0.9, 0.0, None, 0),
+    "pine": ((0.01, 0.022, 0.015), 0.95, 0.0, None, 0),
     "wood_dark": ((0.10, 0.065, 0.04), 0.9, 0.0, None, 0),
     "metal": ((0.40, 0.41, 0.43), 0.45, 0.85, None, 0),
     "black": ((0.025, 0.025, 0.028), 0.7, 0.0, None, 0),
@@ -98,7 +101,7 @@ class Part:
             self.materials.append(material)
         return self.materials.index(material)
 
-    def _add(self, create, material: str, bevel: float = 0.0):
+    def _add(self, create, material: str, bevel: float = 0.0, smooth: bool = False):
         """Builds one primitive in its own bmesh (so bevelling can't touch other pieces) and appends it."""
         piece = bmesh.new()
         verts = create(piece)["verts"]
@@ -108,7 +111,7 @@ class Part:
         index = self._index(material)
         for face in piece.faces:
             face.material_index = index
-            face.smooth = False
+            face.smooth = smooth
         mesh = bpy.data.meshes.new("tmp")
         piece.to_mesh(mesh)
         piece.free()
@@ -121,13 +124,13 @@ class Part:
         m = to_blender(trs((x, cy, z), rot, (w, h, d)))
         self._add(lambda bm: bmesh.ops.create_cube(bm, size=1, matrix=m), material, bevel)
 
-    def cylinder(self, radius, h, x=0, y=0, z=0, material="metal", segments=8, rot=(0, 0, 0), radius_top=None, centered=False):
+    def cylinder(self, radius, h, x=0, y=0, z=0, material="metal", segments=8, rot=(0, 0, 0), radius_top=None, centered=False, caps=True):
         cy = y if centered else y + h / 2
         m = to_blender(trs((x, cy, z), rot))
         top = radius if radius_top is None else radius_top
         self._add(
             lambda bm: bmesh.ops.create_cone(
-                bm, cap_ends=True, segments=segments, radius1=radius, radius2=top, depth=h, matrix=m
+                bm, cap_ends=caps, segments=segments, radius1=radius, radius2=top, depth=h, matrix=m
             ),
             material,
         )
@@ -768,6 +771,202 @@ def build_foh():
     desk.build()
 
 
+# --- Terrain ---------------------------------------------------------------------------------
+# Everything around the places, in world coordinates (three.js space, like places.ts): the grass
+# field with hills beyond the fence, trackway paths, the perimeter fence, trees, festoon lights,
+# light towers and picnic tables. Purely decorative: nothing here is clickable.
+# Keep the space in front of every booth, the stage and the FOH free (see places.ts).
+
+FIELD = {"x": 24.0, "z_min": -26.0, "z_max": 27.0}  # inside the fence
+
+
+def rand(seed):
+    """Deterministic pseudo-random 0…1, so rebuilding gives the same terrain."""
+    return (math.sin(seed * 12.9898) * 43758.5453) % 1.0
+
+
+def ground_height(x, z):
+    """Flat inside the fence, rising into low hills outside it."""
+    dx = max(abs(x) - FIELD["x"] - 2, 0.0)
+    dz = max(FIELD["z_min"] - 2 - z, z - FIELD["z_max"] - 2, 0.0)
+    distance = math.hypot(dx, dz)
+    if distance <= 0:
+        return 0.0
+    rise = min(distance / 22.0, 1.0)
+    rise = rise * rise * (3 - 2 * rise)  # smoothstep
+    bumps = 1.2 * math.sin(x * 0.11) * math.cos(z * 0.09) + 0.8 * math.sin((x + z) * 0.07)
+    return rise * (7.0 + bumps)
+
+
+def build_ground(col):
+    part = Part("terrain_ground", col)
+    size, step = 150.0, 3.0  # smooth-shaded: soft hills, and far fewer vertices in the file
+    count = int(size / step)
+
+    def create(bm):
+        verts = []
+        for j in range(count + 1):
+            row = []
+            for i in range(count + 1):
+                x = -size / 2 + i * step
+                z = -size / 2 + j * step
+                row.append(bm.verts.new(C @ Vector((x, ground_height(x, z), z))))
+            verts.append(row)
+        for j in range(count):
+            for i in range(count):
+                bm.faces.new((verts[j][i], verts[j + 1][i], verts[j + 1][i + 1], verts[j][i + 1]))
+        return {"verts": [v for row in verts for v in row]}
+
+    part._add(create, "grass", smooth=True)
+    part.build()
+
+
+def build_trackway(col):
+    """Ground protection plates: the main path from the entrance to the FOH, and two cross paths."""
+    part = Part("terrain_trackway", col)
+    plate = 2.35  # plates with small gaps, like the interlocking panels at real festivals
+
+    def path(x0, z0, x1, z1, width):
+        length = math.hypot(x1 - x0, z1 - z0)
+        angle = math.atan2(x1 - x0, z1 - z0)
+        count = max(1, round(length / plate))
+        for k in range(count):
+            t = (k + 0.5) / count
+            x, z = x0 + (x1 - x0) * t, z0 + (z1 - z0) * t
+            part.box(width, 0.035, length / count - 0.06, x, 0.0, z, "trackway", rot=(0, angle, 0))
+
+    path(0, 21.5, 0, 6.6, 3.0)       # entrance → FOH steps
+    path(-9.5, 8.6, 9.5, 8.6, 2.4)   # between Lab and Merch
+    path(-9.5, -2.2, 9.5, -2.2, 2.4)  # between the stage and the FOH, towards Projects and Links
+    part.build()
+
+
+def build_perimeter(col):
+    """Construction fence around the field, joining the fences at the entrance."""
+    part = Part("terrain_fence", col)
+    x, z0, z1 = FIELD["x"], FIELD["z_min"], 22.0
+
+    def run(ax, az, bx, bz):
+        length = math.hypot(bx - ax, bz - az)
+        count = max(1, round(length / 3.5))
+        for k in range(count):
+            t0, t1 = k / count, (k + 1) / count - 0.01
+            p0 = (ax + (bx - ax) * t0, az + (bz - az) * t0)
+            p1 = (ax + (bx - ax) * t1, az + (bz - az) * t1)
+            for y in (0.15, 2.0):
+                part.beam((p0[0], y, p0[1]), (p1[0], y, p1[1]), 0.04, "metal", round_=True, segments=4, caps=False)
+            for t in (0.0, 1.0):
+                px, pz = p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t
+                part.beam((px, 0.15, pz), (px, 2.0, pz), 0.04, "metal", round_=True, segments=4, caps=False)
+            for w in range(1, 5):
+                t = w / 5
+                px, pz = p0[0] + (p1[0] - p0[0]) * t, p0[1] + (p1[1] - p0[1]) * t
+                part.beam((px, 0.15, pz), (px, 2.0, pz), 0.014, "metal", round_=True, segments=3, caps=False)
+            part.box(0.6, 0.14, 0.2, p0[0], 0, p0[1], "black", rot=(0, math.atan2(bx - ax, bz - az), 0))
+
+    run(-15.0, z1, -x, z1)
+    run(-x, z1, -x, z0)
+    run(-x, z0, x, z0)
+    run(x, z0, x, z1)
+    run(x, z1, 15.0, z1)
+    part.build()
+
+
+def build_trees(col):
+    """Low-poly pines outside the fence: silhouettes against the sky."""
+    part = Part("terrain_trees", col)
+    placed = 0
+    seed = 1
+    while placed < 70 and seed < 2000:
+        seed += 1
+        x = -62 + rand(seed) * 124
+        z = -62 + rand(seed + 0.5) * 128
+        inside = abs(x) < FIELD["x"] + 3 and FIELD["z_min"] - 3 < z < FIELD["z_max"] + 5
+        if inside or math.hypot(x, z - 2) > 66:
+            continue
+        # keep the view past the entrance (the overview camera) clear
+        if abs(x) < 14 and z > 20:
+            continue
+        height = 4.5 + rand(seed + 0.25) * 4.5
+        y = ground_height(x, z) - 0.2
+        part.cylinder(0.12, height * 0.25, x, y, z, "wood_dark", segments=4, caps=False)
+        for layer in range(3):
+            radius = height * (0.34 - layer * 0.08)
+            part.cylinder(radius, height * 0.42, x, y + height * (0.2 + layer * 0.22), z, "pine", segments=7, radius_top=0.02, caps=False)
+        placed += 1
+    part.build()
+
+
+def build_festoons(col):
+    """Wooden poles along the main path with strings of warm bulbs across it."""
+    part = Part("terrain_festoons", col)
+    poles = [(side * 2.6, z) for z in (20.0, 15.0, 10.0) for side in (-1, 1)]
+    for x, z in poles:
+        part.cylinder(0.07, 4.6, x, 0, z, "wood_dark", segments=6)
+        part.box(0.3, 0.12, 0.3, x, 0, z, "black")
+
+    def string(a, b, sag=0.55, bulbs=11):
+        (ax, az), (bx, bz) = a, b
+        top = 4.4
+        points = []
+        for k in range(bulbs + 1):
+            t = k / bulbs
+            points.append((ax + (bx - ax) * t, top - sag * 4 * t * (1 - t), az + (bz - az) * t))
+        for p0, p1 in zip(points, points[1:]):
+            part.beam(p0, p1, 0.014, "black", round_=True, segments=3, caps=False)
+        for p in points[1:-1]:
+            part.sphere(0.06, p[0], p[1] - 0.08, p[2], "bulb", subdivisions=1)
+
+    for z in (20.0, 15.0, 10.0):
+        string((-2.6, z), (2.6, z))
+    for z0, z1 in ((20.0, 15.0), (15.0, 10.0)):
+        string((-2.6, z0), (2.6, z1), sag=0.7)
+        string((2.6, z0), (-2.6, z1), sag=0.7)
+    for side in (-1, 1):  # along the sides of the path
+        string((side * 2.6, 20.0), (side * 2.6, 10.0), sag=0.8, bulbs=16)
+    part.build()
+
+
+def build_light_towers(col):
+    """Two scaffold towers with floodlights at the back corners, beside the stage."""
+    part = Part("terrain_light_towers", col)
+    for side in (-1, 1):
+        x, z = side * 17.5, -20.0
+        truss(part, (x, 0.05, z), "y", 7.5, size=0.8)
+        part.box(1.4, 0.05, 1.4, x, 0, z, "steel")
+        part.box(1.4, 0.08, 1.4, x, 7.55, z, "steel")
+        for i in range(4):
+            fx = x + (-0.45 + i * 0.3)
+            part.box(0.24, 0.24, 0.2, fx, 7.7, z + 0.3, "black", rot=(0.35, -side * 0.5, 0))
+            part.box(0.18, 0.18, 0.02, fx - side * 0.05, 7.72, z + 0.42, "bulb", rot=(0.35, -side * 0.5, 0))
+    part.build()
+
+
+def build_picnic(col):
+    """Beer tables and benches between the booths and the main path."""
+    part = Part("terrain_picnic", col)
+    for x, z, turn in ((-6.2, 13.0, 0.1), (-6.8, 17.5, -0.05), (6.2, 14.0, -0.1), (6.8, 18.5, 0.05), (-6.0, 1.8, 0.2), (6.3, 3.6, -0.15)):
+        for dz, w, h in ((0.0, 0.7, 0.76), (-0.62, 0.28, 0.46), (0.62, 0.28, 0.46)):
+            ox, oz = dz * math.sin(turn), dz * math.cos(turn)
+            part.box(2.2, 0.04, w, x + ox, h - 0.04, z + oz, "wood", rot=(0, turn, 0))
+            for lx in (-0.85, 0.85):
+                px, pz = x + ox + lx * math.cos(turn), z + oz - lx * math.sin(turn)
+                part.box(0.04, h - 0.04, w * 0.8, px, 0, pz, "steel", rot=(0, turn, 0))
+        part.cylinder(0.25, 0.9, x + 1.7, 0, z + 0.2, "black", segments=8)  # bin
+    part.build()
+
+
+def build_terrain():
+    col = new_collection("terrain")
+    build_ground(col)
+    build_trackway(col)
+    build_perimeter(col)
+    build_trees(col)
+    build_festoons(col)
+    build_light_towers(col)
+    build_picnic(col)
+
+
 def build_entrance():
     """Entrance arch: two truss towers, a truss beam and a banner frame (sign 10.2 × 1.5 at y 4.4, z 0.52)."""
     col = new_collection("entrance")
@@ -817,6 +1016,7 @@ def main():
     build_stage()
     build_foh()
     build_entrance()
+    build_terrain()
     build_items()
     bpy.ops.wm.save_as_mainfile(filepath=BLEND_PATH)
     print(f"Saved {BLEND_PATH}")

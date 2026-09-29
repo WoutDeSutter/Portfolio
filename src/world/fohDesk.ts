@@ -1,4 +1,4 @@
-import { BoxGeometry, Mesh, MeshStandardMaterial, type Object3D } from 'three';
+import { BoxGeometry, InstancedMesh, MeshStandardMaterial, Object3D } from 'three';
 import { LIGHT_COLORS, LIGHT_COLOR_IDS, LIGHT_MODES, type LightColor, type LightMode, type LightState } from '../festival/lights';
 import { CanvasScreen, type Hotspot } from './screen';
 
@@ -97,14 +97,21 @@ export function createFohDesk(parent: Object3D, reducedMotion: boolean): FohDesk
     new MeshStandardMaterial({ color: 0x66676b, metalness: 0.85, roughness: 0.45 }),
     new MeshStandardMaterial({ color: 0x730505, roughness: 0.8 }),
   ];
-  const faders = Array.from({ length: DESK.channels }, (_, channel) => {
-    const accent = channel === 0 || channel === 9 || channel === DESK.channels - 1;
-    const cap = new Mesh(capGeometry, capMaterials[accent ? 1 : 0]);
-    cap.rotation.x = deskSlope;
-    cap.position.x = -1.0 + (channel * 2.0) / (DESK.channels - 1);
-    parent.add(cap);
-    return { cap, position: -1 };
+  // Two instanced meshes (grey and red caps) draw all twenty in two draw calls.
+  const accentChannels = [0, 9, DESK.channels - 1];
+  const capMeshes = capMaterials.map((material, index) => {
+    const count = index === 1 ? accentChannels.length : DESK.channels - accentChannels.length;
+    const mesh = new InstancedMesh(capGeometry, material, count);
+    parent.add(mesh);
+    return mesh;
   });
+  const counters = [0, 0];
+  const faders = Array.from({ length: DESK.channels }, (_, channel) => {
+    const group = accentChannels.includes(channel) ? 1 : 0;
+    return { mesh: capMeshes[group], index: counters[group]++, x: -1.0 + (channel * 2.0) / (DESK.channels - 1), position: -1 };
+  });
+  const cap = new Object3D();
+  cap.rotation.x = deskSlope;
   let faderTarget = 1;
 
   /** Put the faders at `amount` (0…1) of their mix positions; returns whether one moved. */
@@ -116,10 +123,13 @@ export function createFohDesk(parent: Object3D, reducedMotion: boolean): FohDesk
       const settled = Math.abs(next - target) < 0.0005 ? target : next;
       if (settled === fader.position) return;
       fader.position = settled;
-      fader.cap.position.y = DESK.base + DESK.near + (settled * (DESK.far - DESK.near)) / DESK.depth + 0.03;
-      fader.cap.position.z = DESK.edge - settled;
+      cap.position.set(fader.x, DESK.base + DESK.near + (settled * (DESK.far - DESK.near)) / DESK.depth + 0.03, DESK.edge - settled);
+      cap.updateMatrix();
+      fader.mesh.setMatrixAt(fader.index, cap.matrix);
+      fader.mesh.instanceMatrix.needsUpdate = true;
       moved = true;
     });
+    if (moved) for (const mesh of capMeshes) mesh.computeBoundingSphere();
     return moved;
   }
   placeFaders(faderTarget, 1);

@@ -70,3 +70,18 @@ function mergeByMaterial(scene: Object3D): Group {
   }
   return group;
 }
+
+/**
+ * The terrain around the places (grass and hills, paths, fence, trees, festoon lights). It is
+ * decoration, so the world does not wait for it: it is loaded after the first frame and simply
+ * appears. Null when it cannot be loaded (the plain ground stays).
+ */
+export async function loadTerrain(): Promise<Group | null> {
+  try {
+    const gltf = await new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/terrain.glb`);
+    return mergeByMaterial(gltf.scene);
+  } catch (error) {
+    console.warn('[world] Could not load the terrain, keeping the plain ground:', error);
+    return null;
+  }
+}
