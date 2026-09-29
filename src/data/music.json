@@ -1,0 +1,51 @@
+[
+  {
+    "id": "alan-walker-dreamer",
+    "file": "music/alan-walker-dreamer.mp3",
+    "title": "Dreamer",
+    "artist": "Alan Walker",
+    "credit": "Music provided by NoCopyrightSounds"
+  },
+  {
+    "id":"gabriawll-recall",
+    "file":"music/gabriawll-recall.mp3",
+    "title":"Recall",
+    "artist":"Gabriawll",
+    "credit":"Music provided by NoCopyrightSounds"
+  },
+  {
+    "id":"johnning-janji-nostalgia",
+    "file":"music/johnning-janji-nostalgia.mp3",
+    "title":"Nostalgia",
+    "artist":"Johnning, Janji",
+    "credit":"Music provided by NoCopyrightSounds"
+  },
+  {
+    "id":"spicyverse-vibe",
+    "file":"music/spicyverse-vibe.mp3",
+    "title":"Vibe",
+    "artist":"Spicyverse",
+    "credit":"Music provided by NoCopyrightSounds"
+  },
+  {
+    "id":"maestro-chives-egzod-neoni-royalty",
+    "file":"music/maestro-chives-egzod-neoni-royalty.mp3",
+    "title":"Royalty",
+    "artist":"Maestro Chives, Egzod, Neoni",
+    "credit":"Music provided by NoCopyrightSounds"
+  },
+  {
+    "id":"zana-coopex-khemis-tidal-wave",
+    "file":"music/zana-coopex-khemis-tidal-wave.mp3",
+    "title":"Tidal Wave",
+    "artist":"ZANA, Coopex, KHEMIS",
+    "credit":"Music provided by NoCopyrightSounds"
+  },
+  {
+    "id":"coopex-over-the-sun-pt2",
+    "file":"music/coopex-over-the-sun-pt2.mp3",
+    "title":"Over The Sun Pt.2",
+    "artist":"Coopex",
+    "credit":"Music provided by NoCopyrightSounds"
+  }
+]

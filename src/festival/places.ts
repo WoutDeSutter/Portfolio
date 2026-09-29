@@ -34,7 +34,7 @@ const FACE_LEFT = -BOOTH_ANGLE; // booths on the right
 export const PLACES: Place[] = [
   { id: 'entrance', kind: 'entrance', path: '/', x: 0, z: 22, facing: FACE_ENTRANCE, viewDistance: 0 },
   { id: 'about', kind: 'stage', path: '/about', x: 0, z: -15, facing: FACE_ENTRANCE, viewDistance: 17 },
-  { id: 'foh', kind: 'foh', path: '/foh', x: 0, z: 3, facing: FACE_ENTRANCE, viewDistance: 4.6 },
+  { id: 'foh', kind: 'foh', path: '/foh', x: 0, z: 3, facing: FACE_ENTRANCE, viewDistance: 3.6 },
   { id: 'projects', kind: 'booth', path: '/projects', x: -12, z: -5, facing: FACE_RIGHT, viewDistance: 6 },
   { id: 'lab', kind: 'booth', path: '/lab', x: -12, z: 5, facing: FACE_RIGHT, viewDistance: 6 },
   { id: 'contact', kind: 'booth', path: '/contact', x: 12, z: -7, facing: FACE_LEFT, viewDistance: 6 },

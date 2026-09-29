@@ -95,3 +95,160 @@
 .button:hover {
   border-color: var(--color-accent-hover);
 }
+
+/* FOH desk: track list, now playing, light presets */
+
+.panel-section__title {
+  padding-bottom: var(--space-2);
+  border-bottom: var(--border);
+}
+
+.tracks {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+}
+
+.tracks__track {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  gap: 0 var(--space-3);
+  width: 100%;
+  min-height: 2.75rem;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--color-line-strong);
+  border-radius: var(--radius);
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.tracks__track:hover,
+.tracks__track--current {
+  border-color: var(--color-accent);
+}
+
+.tracks__title {
+  font-weight: 500;
+}
+
+.tracks__artist {
+  grid-row: 2;
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.tracks__state {
+  grid-row: 1 / span 2;
+  grid-column: 2;
+  align-self: center;
+  color: var(--color-accent);
+}
+
+.now-playing {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+}
+
+.now-playing__credit {
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+}
+
+.now-playing__controls,
+.presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.presets .button,
+.now-playing__controls .button {
+  cursor: pointer;
+  background: none;
+  color: var(--color-text);
+}
+
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+/* A colour to toggle for the stage lights; selected colours get a light ring */
+.swatch {
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid transparent;
+  border-radius: var(--radius);
+  background: var(--swatch);
+  opacity: 0.4;
+  cursor: pointer;
+}
+
+.swatch[aria-pressed='true'] {
+  opacity: 1;
+  border-color: var(--color-text);
+}
+
+.swatch:hover {
+  opacity: 1;
+}
+
+/* FOH: the HTML controls, folded away (the desk screens are the main controls) */
+.foh-controls {
+  border-top: var(--border);
+  padding-top: var(--space-3);
+}
+
+.foh-controls summary {
+  cursor: pointer;
+  min-height: 2.75rem;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  list-style: none;
+}
+
+.foh-controls summary::-webkit-details-marker {
+  display: none;
+}
+
+/* Our own open/closed arrow (the default marker disappears with display: flex) */
+.foh-controls summary::before {
+  content: '▸';
+  color: var(--color-accent);
+  transition: rotate var(--duration-fast) var(--ease-out);
+}
+
+.foh-controls[open] summary::before {
+  rotate: 90deg;
+}
+
+.foh-controls__content {
+  display: grid;
+  gap: var(--space-6);
+  padding-top: var(--space-3);
+}
+
+.volume {
+  display: grid;
+  grid-template-columns: auto 1fr 3.5rem;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 2.75rem;
+}
+
+.volume input {
+  width: 100%;
+  accent-color: var(--color-accent);
+}
+
+.volume__value {
+  text-align: right;
+}

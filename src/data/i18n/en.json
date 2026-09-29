@@ -137,7 +137,40 @@
     "touch": "Swipe to look around · tap a booth"
   },
   "foh": {
-    "intro": "The mix position. Soon you can play music on the speakers and run the lights from here."
+    "intro": "The mixing desk. Put music on the stage speakers and run the lights.",
+    "music": "Music",
+    "noTracks": "No tracks are ready yet.",
+    "play": "Play",
+    "pause": "Pause",
+    "stop": "Stop",
+    "nowPlaying": "Now playing",
+    "paused": "Paused",
+    "tip": "Pick one or more colours: the show alternates them. Then walk to a booth: the music keeps coming from the stage speakers. Headphones make it easiest to hear where they are.",
+    "lights": "Lights",
+    "mute": "Mute music",
+    "idle": "Pick a track",
+    "colors": "Colours",
+    "modeLabel": "Mode",
+    "modes": {
+      "wash": "Wash",
+      "beams": "Beams",
+      "show": "Show",
+      "blackout": "Blackout"
+    },
+    "colorNames": {
+      "red": "Red",
+      "orange": "Orange",
+      "yellow": "Yellow",
+      "green": "Green",
+      "cyan": "Cyan",
+      "blue": "Blue",
+      "purple": "Purple",
+      "pink": "Pink",
+      "white": "White"
+    },
+    "desks": "Click the screens: the audio desk for music, the lighting desk on the right for the lights.",
+    "keyboardControls": "Controls without a mouse",
+    "volume": "Volume"
   },
   "merch": {
     "intro": "Take my CV home with you."

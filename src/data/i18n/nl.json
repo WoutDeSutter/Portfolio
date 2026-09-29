@@ -137,7 +137,40 @@
     "touch": "Veeg om rond te kijken · tik op een kraampje"
   },
   "foh": {
-    "intro": "De mengtafel. Straks kun je hier muziek op de speakers zetten en de lichten bedienen."
+    "intro": "De mengtafel. Zet muziek op de speakers van het podium en bedien de lichten.",
+    "music": "Muziek",
+    "noTracks": "Er staan nog geen nummers klaar.",
+    "play": "Afspelen",
+    "pause": "Pauzeren",
+    "stop": "Stoppen",
+    "nowPlaying": "Nu speelt",
+    "paused": "Gepauzeerd",
+    "tip": "Kies een of meer kleuren: de show wisselt ze af. Loop daarna naar een kraampje: de muziek blijft uit de speakers van het podium komen. Met een koptelefoon hoor je het best waar ze staan.",
+    "lights": "Lichten",
+    "mute": "Muziek dempen",
+    "idle": "Kies een nummer",
+    "colors": "Kleuren",
+    "modeLabel": "Modus",
+    "modes": {
+      "wash": "Wash",
+      "beams": "Bundels",
+      "show": "Show",
+      "blackout": "Blackout"
+    },
+    "colorNames": {
+      "red": "Rood",
+      "orange": "Oranje",
+      "yellow": "Geel",
+      "green": "Groen",
+      "cyan": "Cyaan",
+      "blue": "Blauw",
+      "purple": "Paars",
+      "pink": "Roze",
+      "white": "Wit"
+    },
+    "desks": "Klik op de schermen: de audiotafel voor muziek, de lichttafel rechts voor de lichten.",
+    "keyboardControls": "Bediening zonder muis",
+    "volume": "Volume"
   },
   "merch": {
     "intro": "Neem mijn cv mee naar huis."

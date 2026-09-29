@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Outlet, useLocation } from 'react-router';
 import { Hotspots } from '../components/Hotspots';
 import { LanguageSwitch } from '../components/LanguageSwitch';
+import { MuteButton } from '../components/MuteButton';
 import { WorldLayer } from '../components/WorldLayer';
 import { useWebGLSupport } from '../hooks/useWebGLSupport';
 import { getPlaceForPath } from './places';
@@ -46,6 +47,7 @@ export function Festival() {
           {!textVersion && <WorldLayer frame={frame} onFail={onWorldFail} />}
           <Hotspots />
           <div className="festival__corner">
+            <MuteButton />
             <LanguageSwitch />
           </div>
           <main className="festival__main">
