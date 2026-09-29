@@ -22,6 +22,7 @@ MODELS = (
     "stage",
     "foh",
     "entrance",
+    "terrain",
 )
 
 

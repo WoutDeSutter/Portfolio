@@ -30,11 +30,12 @@ import {
 import { getLevel, setSpatializer } from '../audio/music';
 import type { LightState } from '../festival/lights';
 import { loadItem } from './items';
-import { loadModels, type ModelName, type Models } from './models';
+import { loadModels, loadTerrain, type ModelName, type Models } from './models';
 import { BASE_FOV, CameraRig, type View } from './rig';
 import { createFohDesk, type FohAction, type FohLabels, type FohState } from './fohDesk';
 import type { CanvasScreen, Hotspot } from './screen';
 import { createStageShow } from './show';
+import { createSky } from './sky';
 import { createSpeakers } from './speakers';
 import { readWorldColors } from './theme';
 
@@ -98,7 +99,8 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
   const { reducedMotion, onNavigate, onHover, onFoh } = options;
   const colors = readWorldColors();
 
-  const renderer = new WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+  // Sharp (high-density) screens hardly show jagged edges, so antialiasing is only worth its cost below 2×.
+  const renderer = new WebGLRenderer({ antialias: window.devicePixelRatio < 2, powerPreference: 'high-performance' });
   // Phones get a lower pixel ratio: fewer pixels to fill, smoother on small GPUs.
   const maxPixelRatio = Math.min(window.innerWidth, window.innerHeight) < 600 ? 1.5 : 2;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
@@ -127,7 +129,10 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
 
   // Terrain
   const materials = createGreyboxMaterials(colors);
-  scene.add(createGround(materials));
+  const ground = createGround(materials);
+  scene.add(ground);
+  const sky = createSky(colors);
+  scene.background = sky;
 
   const objects = new Map<PlaceId, PlaceObject>();
   for (const place of PLACES) {
@@ -484,6 +489,19 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       if (disposed) return;
       frame();
       renderer.setAnimationLoop(frame);
+      // The landscape around the places is decoration: load it after the world is on screen.
+      void loadTerrain().then((terrain) => {
+        if (disposed || !terrain) return;
+        scene.add(terrain);
+        ground.visible = false;
+        invalidate();
+      });
+      if (import.meta.env.DEV) {
+        // Cost of one frame, to keep an eye on while adding models (dev only).
+        const { calls, triangles } = renderer.info.render;
+        console.info(`[world] ${calls} draw calls, ${triangles} triangles, ${renderer.info.memory.textures} textures`);
+        (window as unknown as { __worldRenderer: WebGLRenderer }).__worldRenderer = renderer;
+      }
     });
 
   // With reduced motion the camera does not fly; a short fade through the night softens the cut.
@@ -548,6 +566,7 @@ export function createFestivalWorld(container: HTMLElement, options: WorldOption
       for (const object of objects.values()) object.sign?.dispose();
       for (const board of boards.values()) board.dispose();
       disposeTree(scene);
+      sky.dispose();
       renderer.dispose();
       canvas.remove();
     },
