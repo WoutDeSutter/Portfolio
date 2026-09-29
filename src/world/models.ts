@@ -1,6 +1,7 @@
 import { Group, Material, Mesh, Object3D, type BufferGeometry } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { assetUrl } from '../utils/assetUrl';
 
 /** The Blender models (blender/festival.blend → public/models/*.glb). */
 export type ModelName =
@@ -36,7 +37,7 @@ export async function loadModels(): Promise<Models> {
   const entries = await Promise.all(
     MODEL_NAMES.map(async (name) => {
       try {
-        const gltf = await loader.loadAsync(`${import.meta.env.BASE_URL}models/${name}.glb`);
+        const gltf = await loader.loadAsync(assetUrl(`models/${name}.glb`));
         return [name, mergeByMaterial(gltf.scene)] as const;
       } catch (error) {
         console.warn(`[world] Could not load model "${name}", using the greybox:`, error);
@@ -78,7 +79,7 @@ function mergeByMaterial(scene: Object3D): Group {
  */
 export async function loadTerrain(): Promise<Group | null> {
   try {
-    const gltf = await new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/terrain.glb`);
+    const gltf = await new GLTFLoader().loadAsync(assetUrl('models/terrain.glb'));
     return mergeByMaterial(gltf.scene);
   } catch (error) {
     console.warn('[world] Could not load the terrain, keeping the plain ground:', error);

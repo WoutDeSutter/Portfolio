@@ -1,5 +1,6 @@
 import { BufferGeometry, Group, InstancedMesh, Material, Mesh, Object3D } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { assetUrl } from '../utils/assetUrl';
 
 /**
  * A small audience in front of the main stage: three kinds of person from crowd.glb (collection
@@ -23,7 +24,7 @@ export type Crowd = {
 
 export async function loadCrowd(reducedMotion: boolean): Promise<Crowd | null> {
   try {
-    const gltf = await new GLTFLoader().loadAsync(`${import.meta.env.BASE_URL}models/crowd.glb`);
+    const gltf = await new GLTFLoader().loadAsync(assetUrl('models/crowd.glb'));
     const kinds: { geometry: BufferGeometry; material: Material }[] = [];
     gltf.scene.traverse((object) => {
       if (object instanceof Mesh) kinds.push({ geometry: object.geometry, material: object.material as Material });

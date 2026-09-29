@@ -1,5 +1,6 @@
 import type { AnimationClip, Group } from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { assetUrl } from '../utils/assetUrl';
 
 /**
  * A project's small animated model ("the dish on the menu"), from public/models/items/.
@@ -17,7 +18,7 @@ export function loadItem(path: string): Promise<Item> {
   let item = cache.get(path);
   if (!item) {
     item = loader
-      .loadAsync(`${import.meta.env.BASE_URL}${path}`)
+      .loadAsync(assetUrl(path))
       .then((gltf) => {
         let settings: { turntable?: number; fit?: number; scale?: number } = {};
         gltf.scene.traverse((object) => {
