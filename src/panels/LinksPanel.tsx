@@ -7,12 +7,14 @@ import { useTranslation } from '../i18n/useTranslation';
 export function LinksPanel() {
   const { t } = useTranslation();
   const { linkedin, github, discord } = site.contact;
+  // A profile URL becomes a link; a plain username (e.g. for Discord) is shown as text.
   const channels = [
-    { id: 'linkedin', value: linkedin, href: linkedin },
-    { id: 'github', value: github, href: github },
-    // Discord has no public profile URL for usernames, so it is shown as text.
-    { id: 'discord', value: discord, href: '' },
-  ].filter((channel) => channel.value);
+    { id: 'linkedin', value: linkedin },
+    { id: 'github', value: github },
+    { id: 'discord', value: discord },
+  ]
+    .filter((channel) => channel.value)
+    .map((channel) => ({ ...channel, href: isUrl(channel.value) ? channel.value : '' }));
 
   return (
     <Panel title={t('places.links')}>
@@ -21,7 +23,9 @@ export function LinksPanel() {
           {channels.map((channel) => (
             <div key={channel.id} className="channels__item">
               <dt className="label">{t(`contact.${channel.id}`)}</dt>
-              <dd>{channel.href ? <ExternalLink href={channel.href}>{channel.value}</ExternalLink> : channel.value}</dd>
+              <dd>
+                {channel.href ? <ExternalLink href={channel.href}>{shortUrl(channel.value)}</ExternalLink> : channel.value}
+              </dd>
             </div>
           ))}
         </dl>
@@ -30,4 +34,13 @@ export function LinksPanel() {
       )}
     </Panel>
   );
+}
+
+function isUrl(value: string): boolean {
+  return /^https?:\/\//.test(value);
+}
+
+/** "https://www.github.com/WoutDeSutter/" → "github.com/WoutDeSutter": easier to read in the panel. */
+function shortUrl(url: string): string {
+  return url.replace(/^https?:\/\/(www\.)?/, '').replace(/\/$/, '');
 }

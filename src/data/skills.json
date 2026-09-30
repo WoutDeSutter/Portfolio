@@ -1,16 +1,77 @@
 [
-  { "id": "xr", "name": "XR", "group": "xr" },
-  { "id": "vr", "name": "VR", "group": "xr" },
-  { "id": "ar", "name": "AR", "group": "xr" },
-  { "id": "unity", "name": "Unity", "group": "xr" },
-  { "id": "blender", "name": "Blender", "group": "xr" },
-  { "id": "csharp", "name": "C#", "group": "software" },
-  { "id": "dotnet", "name": ".NET", "group": "software" },
-  { "id": "python", "name": "Python", "group": "software" },
-  { "id": "flask", "name": "Flask", "group": "software" },
-  { "id": "fastapi", "name": "FastAPI", "group": "software" },
-  { "id": "arduino", "name": "Arduino", "group": "physical" },
-  { "id": "esp32", "name": "ESP32", "group": "physical" },
-  { "id": "raspberry-pi", "name": "Raspberry Pi", "group": "physical" },
-  { "id": "projection-mapping", "name": "Projection Mapping", "group": "physical" }
+  {
+    "id": "xr",
+    "name": "XR",
+    "group": "xr"
+  },
+  {
+    "id": "vr",
+    "name": "VR",
+    "group": "xr"
+  },
+  {
+    "id": "ar",
+    "name": "AR",
+    "group": "xr"
+  },
+  {
+    "id": "unity",
+    "name": "Unity",
+    "group": "xr"
+  },
+  {
+    "id": "blender",
+    "name": "Blender",
+    "group": "xr"
+  },
+  {
+    "id": "csharp",
+    "name": "C#",
+    "group": "software"
+  },
+  {
+    "id": "dotnet",
+    "name": ".NET",
+    "group": "software"
+  },
+  {
+    "id": "python",
+    "name": "Python",
+    "group": "software"
+  },
+  {
+    "id": "flask",
+    "name": "Flask",
+    "group": "software"
+  },
+  {
+    "id": "fastapi",
+    "name": "FastAPI",
+    "group": "software"
+  },
+  {
+    "id": "arduino",
+    "name": "Arduino",
+    "group": "physical"
+  },
+  {
+    "id": "esp32",
+    "name": "ESP32",
+    "group": "physical"
+  },
+  {
+    "id": "raspberry-pi",
+    "name": "Raspberry Pi",
+    "group": "physical"
+  },
+  {
+    "id": "projection-mapping",
+    "name": "Projection Mapping",
+    "group": "physical"
+  },
+  {
+    "id": "resolume-arena",
+    "name": "Resolume Arena",
+    "group": "physical"
+  }
 ]
