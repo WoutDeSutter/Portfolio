@@ -99,23 +99,23 @@
   "projects": {
     "tagrun": {
       "title": "TagRun",
-      "summary": "Placeholder — short description of TagRun."
+      "summary": "TagRun is an RFID-based system that allows freerunners to measure and compare their speed across different sections of a parcours."
     },
     "xr-posture-checker": {
       "title": "XR Posture Checker",
-      "summary": "Placeholder — short description of XR Posture Checker."
+      "summary": "Using a Meta Quest 3 and depth cameras, XR Posture Checker analyzes workplace ergonomics in XR without requiring the physical workspace to be built first."
     },
     "puzzle-roulette": {
       "title": "Puzzle Roulette",
-      "summary": "Placeholder — short description of Puzzle Roulette."
+      "summary": "A physical escape-room game inspired by 'Keep Talking and Nobody Explodes', where players work together to solve puzzles under time pressure."
     },
     "kitchenapp": {
       "title": "KitchenApp",
-      "summary": "Placeholder — short description of KitchenApp."
+      "summary": "A home inventory management system that makes it easy to keep track of ingredients, quantities, and nutritional information."
     },
     "post-it-machine": {
       "title": "Post-It Machine",
-      "summary": "Placeholder — short description of Post-It Machine."
+      "summary": "An old receipt printer transformed into an automated Post-It machine for printing short notes and shopping lists."
     }
   },
   "places": {

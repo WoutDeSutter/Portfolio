@@ -99,23 +99,23 @@
   "projects": {
     "tagrun": {
       "title": "TagRun",
-      "summary": "Tijdelijk — korte beschrijving van TagRun."
+      "summary": "TagRun is een RFID-gebaseerd systeem waarmee freerunners hun snelheid op verschillende delen van een parcours kunnen meten en vergelijken."
     },
     "xr-posture-checker": {
       "title": "XR Posture Checker",
-      "summary": "Tijdelijk — korte beschrijving van XR Posture Checker."
+      "summary": "Met een Meta Quest 3 en depth camera's analyseert de XR Posture Checker de ergonomie van een werkplek in XR, zonder dat de fysieke werkplek gebouwd hoeft te worden."
     },
     "puzzle-roulette": {
       "title": "Puzzle Roulette",
-      "summary": "Tijdelijk — korte beschrijving van Puzzle Roulette."
+      "summary": "Een fysieke escape-room game geïnspireerd door 'Keep Talking and Nobody Explodes', waarbij spelers samen puzzels oplossen onder tijdsdruk."
     },
     "kitchenapp": {
       "title": "KitchenApp",
-      "summary": "Tijdelijk — korte beschrijving van KitchenApp."
+      "summary": "Een voorraadbeheersysteem voor thuis waarmee ingrediënten, hoeveelheden en voedingswaarden eenvoudig bijgehouden kunnen worden."
     },
     "post-it-machine": {
       "title": "Post-It Machine",
-      "summary": "Tijdelijk — korte beschrijving van Post-It Machine."
+      "summary": "Een oude kassaticketprinter omgebouwd tot een geautomatiseerde Post-It-machine voor het afdrukken van korte notities en boodschappenlijstjes."
     }
   },
   "places": {
