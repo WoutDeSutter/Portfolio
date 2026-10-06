@@ -1,6 +1,7 @@
 import { Panel } from '../components/Panel';
 import { site } from '../content/content';
 import { useTranslation } from '../i18n/useTranslation';
+import { assetUrl } from '../utils/assetUrl';
 
 /** The Merch stand: take the CV home. */
 export function MerchPanel() {
@@ -10,7 +11,9 @@ export function MerchPanel() {
     <Panel title={t('places.merch')}>
       <p className="panel-intro">{t('merch.intro')}</p>
       {site.cv.file ? (
-        <a className="button button--accent" href={site.cv.file} download>
+        // assetUrl adds the file's content hash, so a replaced CV is never served from an old cache;
+        // the download attribute keeps the plain file name when saving.
+        <a className="button button--accent" href={assetUrl(site.cv.file)} download={site.cv.file.split('/').pop()}>
           {t('cv.download')}
         </a>
       ) : (

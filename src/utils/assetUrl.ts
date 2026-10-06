@@ -1,4 +1,4 @@
-/** Content hashes of the files in public/models and public/music, filled in at build time (vite.config.ts). */
+/** Content hashes of the files in public/models, public/music and public/cv, filled in at build time (vite.config.ts). */
 declare const __ASSET_VERSIONS__: Record<string, string>;
 
 /**

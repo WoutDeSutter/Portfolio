@@ -9,8 +9,8 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   define: {
-    // Content hashes of the models and music, so a changed file gets a new URL (src/utils/assetUrl.ts).
-    __ASSET_VERSIONS__: JSON.stringify(assetVersions(['models', 'music'])),
+    // Content hashes of the models, music and CV, so a changed file gets a new URL (src/utils/assetUrl.ts).
+    __ASSET_VERSIONS__: JSON.stringify(assetVersions(['models', 'music', 'cv'])),
   },
   build: {
     // Three.js is ~600 kB (~160 kB gzipped) on its own. It is loaded lazily in a
